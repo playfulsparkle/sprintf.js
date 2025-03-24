@@ -3,32 +3,87 @@
 !function () {
     'use strict';
 
+    /**
+     * Regular expressions used for parsing format strings
+     * @namespace
+     */
     const re = {
+        // Matches if type is NOT 'T' (type detection)
         notType: /[^T]/,
+        // Matches if type is NOT 'v' (primitive value)
         notPrimitive: /[^v]/,
+        // Matches numeric format specifiers
         number: /[diefg]/,
+        // Matches numeric argument types requiring number validation
         numericArg: /[bcdiefguxX]/,
+        // Matches JSON object specifier
         jsonObject: /[j]/,
+        // Matches plain text between format specifiers
         plainText: /^[^\x25]+/,
+        // Matches double percent (escaped percent)
         doublePercent: /^\x25{2}/,
+        // Matches format placeholder components
         placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxX])/,
+        // Matches valid named argument keys
         namedKey: /^([a-z_][a-z_\d]*)/i,
+        // Matches dot notation in named arguments
         dotAccess: /^\.([a-z_][a-z_\d]*)/i,
+        // Matches array index access in named arguments
         bracketAccess: /^\[(\d+)\]/,
+        // Matches numeric sign prefixes
         numeralPrefix: /^[+-]/
     };
 
+    /**
+     * Cache for parsed format strings to improve performance
+     * @type {Map<string, {parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}>}
+     */
     const sprintfCache = new Map();
 
+    /**
+     * @typedef {Object} Placeholder
+     * @property {string} placeholder - The entire matched placeholder string
+     * @property {string} [paramNo] - Positional parameter number (1-based index)
+     * @property {Array<string>} [keys] - Named parameter access path
+     * @property {string} [numeralPrefix] - '+' sign for positive numbers
+     * @property {string} [padChar] - Padding character (e.g., '0' or space)
+     * @property {boolean} [align] - Left-align flag (true when '-' present)
+     * @property {string} [width] - Minimum field width
+     * @property {string} [precision] - Precision for numbers/strings
+     * @property {string} type - Conversion type character
+     */
+
+    /**
+     * Main formatting function similar to C's sprintf
+     * @param {string} key - Format string containing placeholders
+     * @param {...*} args - Values to format
+     * @returns {string} Formatted string
+     * @throws {Error} On invalid arguments or formatting errors
+     */
     function sprintf(key) {
         const parseResult = parse(key);
         return format(parseResult.parseTree, Array.from(arguments).slice(1), parseResult.namedUsed);
     }
 
+    /**
+     * Version of sprintf that accepts arguments as an array
+     * @param {string} format - Format string
+     * @param {Array} argv - Array of values to format
+     * @returns {string} Formatted string
+     */
     function vsprintf(format, argv) {
         return sprintf.apply(null, [format].concat(argv || []));
     }
 
+    /**
+     * Core formatting engine that processes parsed format tree
+     * @param {Array<string|Placeholder>} parseTree - Result from parse()
+     * @param {Array} argv - Values to format
+     * @param {boolean} usesNamedArgs - Whether format uses named arguments
+     * @returns {string} Formatted string
+     * @throws {TypeError} On invalid numeric arguments
+     * @throws {Error} On missing named arguments
+     */
     function format(parseTree, argv, usesNamedArgs) {
         let cursor = 0;
         const treeLength = parseTree.length;
@@ -53,9 +108,6 @@
 
         for (let idx = 0; idx < treeLength; idx++) {
             const placeholder = parseTree[idx];
-            let arg;
-            let isPositive;
-            let numeralPrefix = '';
 
             if (typeof placeholder === 'string') {
                 output += placeholder;
@@ -63,6 +115,7 @@
                 continue;
             }
 
+            let arg;
 
             // Get the argument value
             if (placeholder.keys) { // keyword argument
@@ -75,13 +128,13 @@
 
                     arg = arg[placeholder.keys[k]];
                 }
-            } else if (placeholder.paramNo) { // positional argument (explicit)
+            } else if (placeholder.paramNo) { // Explicit positional argument
                 arg = argv[placeholder.paramNo - 1];
-            } else { // positional argument (implicit)
+            } else { // Implicit positional argument
                 arg = argv[cursor++];
             }
 
-            // Invoke if function
+            // Handle function arguments for non-type/non-primitive specifiers
             if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
                 try {
                     arg = arg();
@@ -90,75 +143,80 @@
                 }
             }
 
-            // Validate numeric arguments
+            // Validate numeric arguments for numeric placeholders
             if (re.numericArg.test(placeholder.type) && (typeof arg !== 'number' && isNaN(arg))) {
                 throw new TypeError(`[sprintf] expecting number but found ${typeof arg}`);
             }
+
+            let isPositive;
+            let numeralPrefix = '';
 
             // Format according to type
             if (re.number.test(placeholder.type)) {
                 isPositive = arg >= 0;
             }
 
+            // Process argument based on format specifier
             switch (placeholder.type) {
-                case 'b':
+                case 'b': // Binary
                     arg = parseInt(arg, 10).toString(2);
                     break;
-                case 'c':
+                case 'c': // Character
                     arg = String.fromCharCode(parseInt(arg, 10));
                     break;
-                case 'd':
+                case 'd': // Integer
                 case 'i':
                     arg = parseInt(arg, 10);
                     break;
-                case 'j':
+                case 'j': // JSON
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
                     break;
-                case 'e':
+                case 'e': // Exponential notation
                     arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
                     break;
-                case 'f':
+                case 'f': // Fixed-point
                     arg = placeholder.precision ? parseFloat(arg).toFixed(placeholder.precision) : parseFloat(arg);
                     break;
-                case 'g':
+                case 'g': // General format
                     arg = placeholder.precision ? String(Number(arg.toPrecision(placeholder.precision))) : parseFloat(arg);
                     break;
-                case 'o':
+                case 'o': // Octal
                     arg = (parseInt(arg, 10) >>> 0).toString(8);
                     break;
-                case 's':
+                case 's': // String
                     arg = String(arg);
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
-                case 't':
+                case 't': // Boolean
                     arg = String(!!arg);
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
-                case 'T':
+                case 'T': // Type detection
                     arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
-                case 'u':
+                case 'u': // Unsigned integer
                     arg = parseInt(arg, 10) >>> 0;
                     break;
-                case 'v':
+                case 'v': // Primitive value
                     arg = String(arg.valueOf());
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
-                case 'x':
+                case 'x': // Hexadecimal (lowercase)
                     arg = (parseInt(arg, 10) >>> 0).toString(16);
                     break;
-                case 'X':
+                case 'X': // Hexadecimal (uppercase)
                     arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
                     break;
                 default:
                     throw new Error(`[sprintf] Unknown type: ${placeholder.type}`);
             }
 
-            // Handle output formatting
+            // Apply padding and alignment
             if (re.jsonObject.test(placeholder.type)) {
                 output += arg;
             } else {
+                // Handle numeric sign prefix
                 if (re.number.test(placeholder.type) && (!isPositive || placeholder.numeralPrefix)) {
                     numeralPrefix = isPositive ? '+' : '-';
                     arg = String(arg).replace(re.numeralPrefix, '');
@@ -175,27 +233,37 @@
         return output;
     }
 
+    /**
+     * Parses format string into executable tree structure
+     * @param {string} format - Format string to parse
+     * @returns {{parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}}
+     * @throws {SyntaxError} On invalid format syntax
+     */
     function parse(format) {
-        // Check cache first
-        const cached = sprintfCache.get(format);
-
-        if (cached) {
-            return cached;
+        if (sprintfCache.has(format)) {
+            return sprintfCache.get(format);
         }
 
         let _format = format;
         const parseTree = [];
-        let match;
         let namedUsed = false;
         let positionalUsed = false;
 
         while (_format) {
+            let match;
+
+            // Match plain text between placeholders
             if ((match = re.plainText.exec(_format)) !== null) {
                 parseTree.push(match[0]);
-            } else if ((match = re.doublePercent.exec(_format)) !== null) {
+            }
+            // Match escaped percent (%%)
+            else if ((match = re.doublePercent.exec(_format)) !== null) {
                 parseTree.push('%');
-            } else if ((match = re.placeholder.exec(_format)) !== null) {
-                if (match[2]) { // Named placeholder
+            }
+            // Match complex placeholders
+            else if ((match = re.placeholder.exec(_format)) !== null) {
+                // Handle named arguments
+                if (match[2]) {
                     namedUsed = true;
                     const fieldList = [];
                     let replacementField = match[2];
@@ -220,6 +288,7 @@
 
                     match[2] = fieldList;
                 }
+                // Handle positional arguments
                 else if (match[1]) { // Explicit positional placeholder
                     positionalUsed = true;
                 }
@@ -257,19 +326,19 @@
         return result;
     }
 
-    // Export module
+    // Module export setup
     const sprintfLib = {
         sprintf: sprintf,
         vsprintf: vsprintf
     };
 
-    // Browser export
+    // Browser global export
     if (typeof window !== 'undefined') {
         // Safely expose to window without overwriting
         window.sprintf = sprintf;
         window.vsprintf = vsprintf;
 
-        // AMD support
+        // AMD module definition
         if (typeof define === 'function' && define.amd) {
             define(() => sprintfLib);
         }
@@ -281,7 +350,7 @@
         exports.vsprintf = vsprintf;
     }
 
-    // ES modules export
+    // Node.js module export
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = sprintfLib;
     }
