@@ -31,7 +31,9 @@
         // Matches array index access in named arguments
         bracketAccess: /^\[(\d+)\]/,
         // Matches numeric sign prefixes
-        numeralPrefix: /^[+-]/
+        numeralPrefix: /^[+-]/,
+        allowedNamedKeyChars: /^[a-zA-Z_][a-zA-Z0-9_]*$/,
+        allowedNumericIndex: /^\d+$/
     };
 
     /**
@@ -122,11 +124,13 @@
                 arg = namedArgs;
 
                 for (let k = 0; k < placeholder.keys.length; k++) {
+                    const placeholderKey = placeholder.keys[k];
+
                     if (arg === undefined || arg === null) {
-                        throw new Error(`[sprintf] Cannot access property "${placeholder.keys[k]}" of undefined value`);
+                        throw new Error(`[sprintf] Cannot access property "${placeholderKey}" of undefined value`);
                     }
 
-                    arg = arg[placeholder.keys[k]];
+                    arg = arg[placeholderKey];
                 }
             } else if (placeholder.paramNo) { // Explicit positional argument
                 arg = argv[placeholder.paramNo - 1];
@@ -270,12 +274,24 @@
                     let fieldMatch;
 
                     if ((fieldMatch = re.namedKey.exec(replacementField)) !== null) {
+                        if (!re.allowedNamedKeyChars.test(fieldMatch[1])) {
+                            throw new SyntaxError('[sprintf] Invalid named argument key segment: must start with a letter or underscore, followed by letters, numbers, or underscores');
+                        }
+
                         fieldList.push(fieldMatch[1]);
 
                         while ((replacementField = replacementField.substring(fieldMatch[0].length)) !== '') {
                             if ((fieldMatch = re.dotAccess.exec(replacementField)) !== null) {
+                                if (!re.allowedNamedKeyChars.test(fieldMatch[1])) {
+                                    throw new SyntaxError('[sprintf] Invalid named argument key segment after dot: must start with a letter or underscore, followed by letters, numbers, or underscores');
+                                }
+
                                 fieldList.push(fieldMatch[1]);
                             } else if ((fieldMatch = re.bracketAccess.exec(replacementField)) !== null) {
+                                if (!re.allowedNumericIndex.test(index)) { // Ensure index is a number
+                                    throw new SyntaxError('[sprintf] Invalid array index in named argument key: must be a non-negative integer');
+                                }
+
                                 fieldList.push(fieldMatch[1]);
                             } else {
                                 throw new SyntaxError('[sprintf] failed to parse named argument key');
