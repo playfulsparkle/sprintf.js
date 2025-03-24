@@ -110,7 +110,7 @@ To include values that may change when the string is created (e.g., current time
 __Example:__
 
 ```javascript
-sprintf('Today is: %s', new Date().toString());
+sprintf('Today is: %s', () => new Date().toString());
 // Returns "Today is: Mon Mar 24 2025 12:34:56 GMT+0000"
 ```
 

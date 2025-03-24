@@ -1,82 +1,88 @@
-// Day 3: Formatter Implementation
+/* global window, exports, define */
 
-(function () {
+!function () {
     'use strict';
 
-    // Prepare an empty cache for parsed format strings
-    const MAX_CACHE_SIZE = 100;
-    const sprintf_cache = new Map();
-
-    // Pre-compile regular expressions for better performance
     const re = {
-        not_string: /[^s]/,
-        not_bool: /[^t]/,
-        not_type: /[^T]/,
-        not_primitive: /[^v]/,
+        notType: /[^T]/,
+        notPrimitive: /[^v]/,
         number: /[diefg]/,
-        numeric_arg: /[bcdiefguxX]/,
-        json: /[j]/,
-        not_json: /[^j]/,
-        text: /^[^%]+/,
-        modulo: /^%%/,
-        placeholder: /^%(?:([1-9]\d*)\$|\\(([^)]+)\\))?(\\+)?(0|'[^$])?(-)?(\\d+)?(?:\\.(\\d+))?([b-gijostTuvxX])/,
-        key: /^([a-z_][a-z_\d]*)/i,
-        key_access: /^\.([a-z_][a-z_\d]*)/i,
-        index_access: /^\[(\d+)]/,
-        sign: /^[+-]/
+        numericArg: /[bcdiefguxX]/,
+        jsonObject: /[j]/,
+        plainText: /^[^\x25]+/,
+        doublePercent: /^\x25{2}/,
+        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxX])/,
+        namedKey: /^([a-z_][a-z_\d]*)/i,
+        dotAccess: /^\.([a-z_][a-z_\d]*)/i,
+        bracketAccess: /^\[(\d+)\]/,
+        numeralPrefix: /^[+-]/
     };
 
+    const sprintfCache = new Map();
+
     function sprintf(key) {
-        const parseResult = parse(key)
-        return format(parseResult.parse_tree, Array.from(arguments).slice(1), parseResult.named_used)
+        const parseResult = parse(key);
+        return format(parseResult.parseTree, Array.from(arguments).slice(1), parseResult.namedUsed);
     }
 
-    function format(parse_tree, argv, uses_named_args) {
+    function vsprintf(format, argv) {
+        return sprintf.apply(null, [format].concat(argv || []));
+    }
+
+    function format(parseTree, argv, usesNamedArgs) {
         let cursor = 0;
-        const tree_length = parse_tree.length;
-        const named_args = {};
+        const treeLength = parseTree.length;
+        const namedArgs = Object.create(null);
         let output = '';
 
-        let filtered_argv = [];
-        if (uses_named_args) {
-            for (let i = 0; i < argv.length; i++) {
-                const arg = argv[i];
-                if (arg !== null && typeof arg === 'object' && !Array.isArray(arg)) {
-                    Object.assign(named_args, arg);
+        // Extract named arguments and filter positional arguments if named are used
+        const filteredArgv = [];
+
+        if (usesNamedArgs) {
+            for (let idx = 0; idx < argv.length; idx++) {
+                if (argv[idx] !== null && typeof argv[idx] === 'object' && !Array.isArray(argv[idx])) {
+                    Object.assign(namedArgs, argv[idx]);
                 } else {
-                    filtered_argv.push(arg);
+                    filteredArgv.push(argv[idx]);
                 }
             }
+
+            // Use filteredArgv for positional parameters
+            argv = filteredArgv;
         }
 
-        argv = filtered_argv;
-
-        for (let i = 0; i < tree_length; i++) {
-            const ph = parse_tree[i];
+        for (let idx = 0; idx < treeLength; idx++) {
+            const placeholder = parseTree[idx];
             let arg;
-            let is_positive;
-            let sign = '';
+            let isPositive;
+            let numeralPrefix = '';
 
-            if (typeof ph === 'string') {
-                output += ph;
+            if (typeof placeholder === 'string') {
+                output += placeholder;
+
                 continue;
             }
 
-            if (ph.keys) {
-                arg = named_args;
-                for (let k = 0; k < ph.keys.length; k++) {
+
+            // Get the argument value
+            if (placeholder.keys) { // keyword argument
+                arg = namedArgs;
+
+                for (let k = 0; k < placeholder.keys.length; k++) {
                     if (arg === undefined || arg === null) {
-                        throw new Error('[sprintf] Cannot access property "' + ph.keys[k] + '" of undefined value');
+                        throw new Error(`[sprintf] Cannot access property "${placeholder.keys[k]}" of undefined value`);
                     }
-                    arg = arg[ph.keys[k]];
+
+                    arg = arg[placeholder.keys[k]];
                 }
-            } else if (ph.param_no) {
-                arg = argv[ph.param_no - 1];
-            } else {
+            } else if (placeholder.paramNo) { // positional argument (explicit)
+                arg = argv[placeholder.paramNo - 1];
+            } else { // positional argument (implicit)
                 arg = argv[cursor++];
             }
 
-            if (re.not_type.test(ph.type) && re.not_primitive.test(ph.type) && typeof arg === 'function') {
+            // Invoke if function
+            if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
                 try {
                     arg = arg();
                 } catch (e) {
@@ -84,15 +90,17 @@
                 }
             }
 
-            if (re.numeric_arg.test(ph.type) && (typeof arg !== 'number' && isNaN(arg))) {
-                throw new TypeError('[sprintf] expecting number but found ' + typeof arg);
+            // Validate numeric arguments
+            if (re.numericArg.test(placeholder.type) && (typeof arg !== 'number' && isNaN(arg))) {
+                throw new TypeError(`[sprintf] expecting number but found ${typeof arg}`);
             }
 
-            if (re.number.test(ph.type)) {
-                is_positive = arg >= 0;
+            // Format according to type
+            if (re.number.test(placeholder.type)) {
+                isPositive = arg >= 0;
             }
 
-            switch (ph.type) {
+            switch (placeholder.type) {
                 case 'b':
                     arg = parseInt(arg, 10).toString(2);
                     break;
@@ -104,38 +112,38 @@
                     arg = parseInt(arg, 10);
                     break;
                 case 'j':
-                    arg = JSON.stringify(arg, null, ph.width ? parseInt(ph.width) : 0);
+                    arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
                     break;
                 case 'e':
-                    arg = ph.precision ? parseFloat(arg).toExponential(ph.precision) : parseFloat(arg).toExponential();
+                    arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
                     break;
                 case 'f':
-                    arg = ph.precision ? parseFloat(arg).toFixed(ph.precision) : parseFloat(arg);
+                    arg = placeholder.precision ? parseFloat(arg).toFixed(placeholder.precision) : parseFloat(arg);
                     break;
                 case 'g':
-                    arg = ph.precision ? String(Number(arg).toPrecision(ph.precision)) : parseFloat(arg);
+                    arg = placeholder.precision ? String(Number(arg.toPrecision(placeholder.precision))) : parseFloat(arg);
                     break;
                 case 'o':
                     arg = (parseInt(arg, 10) >>> 0).toString(8);
                     break;
                 case 's':
                     arg = String(arg);
-                    arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
+                    arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 't':
                     arg = String(!!arg);
-                    arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
+                    arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'T':
                     arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
-                    arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
+                    arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'u':
                     arg = parseInt(arg, 10) >>> 0;
                     break;
                 case 'v':
                     arg = String(arg.valueOf());
-                    arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
+                    arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'x':
                     arg = (parseInt(arg, 10) >>> 0).toString(16);
@@ -144,91 +152,137 @@
                     arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
                     break;
                 default:
-                    throw new Error('[sprintf] Unknown type: ' + ph.type);
+                    throw new Error(`[sprintf] Unknown type: ${placeholder.type}`);
             }
 
-            if (re.json.test(ph.type)) {
+            // Handle output formatting
+            if (re.jsonObject.test(placeholder.type)) {
                 output += arg;
             } else {
-                if (re.number.test(ph.type) && (!is_positive || ph.sign)) {
-                    sign = is_positive ? '+' : '-';
-                    arg = String(arg).replace(re.sign, '');
+                if (re.number.test(placeholder.type) && (!isPositive || placeholder.numeralPrefix)) {
+                    numeralPrefix = isPositive ? '+' : '-';
+                    arg = String(arg).replace(re.numeralPrefix, '');
                 }
 
-                const pad_character = ph.pad_char ? ph.pad_char === '0' ? '0' : ph.pad_char.charAt(1) : ' ';
-                const pad_length = ph.width - (sign + arg).length;
-                const pad = ph.width && pad_length > 0 ? pad_character.repeat(pad_length) : '';
+                const padCharacter = placeholder.padChar ? placeholder.padChar === '0' ? '0' : placeholder.padChar.charAt(1) : ' ';
+                const padLength = placeholder.width - (numeralPrefix + arg).length;
+                const pad = placeholder.width && padLength > 0 ? padCharacter.repeat(padLength) : '';
 
-                output += ph.align ? sign + arg + pad : (pad_character === '0' ? sign + pad + arg : pad + sign + arg);
+                output += placeholder.align ? numeralPrefix + arg + pad : (padCharacter === '0' ? numeralPrefix + pad + arg : pad + numeralPrefix + arg);
             }
         }
 
         return output;
     }
 
+    function parse(format) {
+        // Check cache first
+        const cached = sprintfCache.get(format);
 
-    function parse(fmt) {
-        const cached = sprintf_cache.get(fmt);
-        if (cached) return cached;
+        if (cached) {
+            return cached;
+        }
 
-        let _fmt = fmt;
-        const parse_tree = [];
+        let _format = format;
+        const parseTree = [];
         let match;
+        let namedUsed = false;
+        let positionalUsed = false;
 
-        while (_fmt) {
-            if ((match = re.text.exec(_fmt)) !== null) {
-                parse_tree.push(match[0]);
-            } else if ((match = re.modulo.exec(_fmt)) !== null) {
-                parse_tree.push('%');
-            } else if ((match = re.placeholder.exec(_fmt)) !== null) {
-                parse_tree.push({
-                    param_no: match[1],
-                    keys: match[2] ? match[2].split('.') : null,
-                    sign: match[3],
-                    pad_char: match[4],
+        while (_format) {
+            if ((match = re.plainText.exec(_format)) !== null) {
+                parseTree.push(match[0]);
+            } else if ((match = re.doublePercent.exec(_format)) !== null) {
+                parseTree.push('%');
+            } else if ((match = re.placeholder.exec(_format)) !== null) {
+                if (match[2]) { // Named placeholder
+                    namedUsed = true;
+                    const fieldList = [];
+                    let replacementField = match[2];
+                    let fieldMatch;
+
+                    if ((fieldMatch = re.namedKey.exec(replacementField)) !== null) {
+                        fieldList.push(fieldMatch[1]);
+
+                        while ((replacementField = replacementField.substring(fieldMatch[0].length)) !== '') {
+                            if ((fieldMatch = re.dotAccess.exec(replacementField)) !== null) {
+                                fieldList.push(fieldMatch[1]);
+                            } else if ((fieldMatch = re.bracketAccess.exec(replacementField)) !== null) {
+                                fieldList.push(fieldMatch[1]);
+                            } else {
+                                throw new SyntaxError('[sprintf] failed to parse named argument key');
+                            }
+                        }
+                    }
+                    else {
+                        throw new SyntaxError('[sprintf] failed to parse named argument key');
+                    }
+
+                    match[2] = fieldList;
+                }
+                else if (match[1]) { // Explicit positional placeholder
+                    positionalUsed = true;
+                }
+                else { // Implicit positional placeholder
+                    positionalUsed = true;
+                }
+
+                parseTree.push({
+                    placeholder: match[0],
+                    paramNo: match[1],
+                    keys: match[2],
+                    numeralPrefix: match[3],
+                    padChar: match[4],
                     align: match[5],
                     width: match[6],
                     precision: match[7],
                     type: match[8]
                 });
-            } else {
-                throw new SyntaxError('[sprintf] Unexpected format placeholder');
             }
-            _fmt = _fmt.substring(match[0].length);
+            else {
+                throw new SyntaxError('[sprintf] unexpected placeholder');
+            }
+
+            _format = _format.substring(match[0].length);
         }
 
-        if (sprintf_cache.size >= MAX_CACHE_SIZE) {
-            const firstKey = sprintf_cache.keys().next().value;
-            sprintf_cache.delete(firstKey);
-        }
+        const result = {
+            parseTree,
+            namedUsed,
+            positionalUsed
+        };
 
-        const result = { parse_tree };
-        sprintf_cache.set(fmt, result);
+        sprintfCache.set(format, result);
+
         return result;
     }
 
-    function sprintf() {
-        throw new Error('sprintf not implemented yet');
-    }
-
-    function vsprintf() {
-        throw new Error('vsprintf not implemented yet');
-    }
-
     // Export module
-    const sprintfLib = { sprintf, vsprintf };
+    const sprintfLib = {
+        sprintf: sprintf,
+        vsprintf: vsprintf
+    };
 
+    // Browser export
     if (typeof window !== 'undefined') {
+        // Safely expose to window without overwriting
         window.sprintf = sprintf;
         window.vsprintf = vsprintf;
+
+        // AMD support
+        if (typeof define === 'function' && define.amd) {
+            define(() => sprintfLib);
+        }
     }
 
+    // CommonJS export
     if (typeof exports !== 'undefined') {
         exports.sprintf = sprintf;
         exports.vsprintf = vsprintf;
     }
 
+    // ES modules export
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = sprintfLib;
     }
-})();
+}();
