@@ -116,21 +116,21 @@ This library is written using modern JavaScript ES2015 (ES6) features. It is exp
 | Browser                  | Minimum Supported Version |
 |--------------------------|---------------------------|
 | **Desktop Browsers**     |                           |
-| Chrome                   | 49                        |
-| Edge                     | 13                        |
-| Firefox                  | 45                        |
-| Opera                    | 36                        |
-| Safari                   | 14.1                      |
+| Chrome                   | 45                        |
+| Edge                     | 12                        |
+| Firefox                  | 34                        |
+| Opera                    | 32                        |
+| Safari                   | 9                         |
 | **Mobile Browsers**      |                           |
-| Chrome Android           | 49                        |
-| Firefox for Android      | 45                        |
-| Opera Android            | 36                        |
-| Safari on iOS            | 14.5                      |
-| Samsung Internet         | 5.0                       |
-| WebView Android          | 49                        |
-| WebView on iOS           | 14.5                      |
+| Chrome Android           | 45                        |
+| Firefox for Android      | 34                        |
+| Opera Android            | 32                        |
+| Safari on iOS            | 9                         |
+| Samsung Internet         | 5                         |
+| WebView Android          | 45                        |
+| WebView on iOS           | 9                         |
 | **Other**                |                           |
-| Node.js                  | 6.13.0                    |
+| Node.js                  | 4                         |
 
 ## License
 
