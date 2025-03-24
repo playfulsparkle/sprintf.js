@@ -1,0 +1,52 @@
+{
+    "name": "@playfulsparkle/sprintf-js",
+    "version": "0.0.1",
+    "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
+    "author": "Zsolt Oroszlány <hello@playfulsparkle.com>",
+    "main": "src/sprintf.js",
+    "scripts": {
+        "test": "mocha test/*.js",
+        "pretest": "npm run lint",
+        "lint": "eslint .",
+        "lint:fix": "eslint --fix ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/playfulsparkle/sprintf.js.git"
+    },
+    "keywords": [
+        "sprintf",
+        "parser",
+        "javascript",
+        "formatting"
+    ],
+    "license": "BSD-3-Clause",
+    "readmeFilename": "README.md",
+    "bugs": {
+        "url": "https://github.com/playfulsparkle/sprintf.js/issues"
+    },
+    "homepage": "https://github.com/playfulsparkle/sprintf.js#readme",
+    "devDependencies": {
+        "benchmark": "^2.1.4",
+        "eslint": "^5.10.0",
+        "gulp": "^3.9.1",
+        "gulp-benchmark": "^1.1.1",
+        "gulp-eslint": "^5.0.0",
+        "gulp-header": "^2.0.5",
+        "gulp-mocha": "^6.0.0",
+        "gulp-rename": "^1.4.0",
+        "gulp-sourcemaps": "^2.6.4",
+        "gulp-uglify": "^3.0.1",
+        "mocha": "^5.2.0"
+    },
+    "overrides": {
+        "graceful-fs": "^4.2.11"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
+}
