@@ -138,15 +138,6 @@
                 arg = argv[cursor++];
             }
 
-            // Handle function arguments for non-type/non-primitive specifiers
-            if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
-                try {
-                    arg = arg();
-                } catch (e) {
-                    throw new Error('[sprintf] Failed to execute function argument');
-                }
-            }
-
             // Validate numeric arguments for numeric placeholders
             if (re.numericArg.test(placeholder.type) && (typeof arg !== 'number' && isNaN(arg))) {
                 throw new TypeError(`[sprintf] expecting number but found ${typeof arg}`);
@@ -288,7 +279,7 @@
 
                                 fieldList.push(fieldMatch[1]);
                             } else if ((fieldMatch = re.bracketAccess.exec(replacementField)) !== null) {
-                                if (!re.allowedNumericIndex.test(index)) { // Ensure index is a number
+                                if (!re.allowedNumericIndex.test(fieldMatch[1])) { // Ensure index is a number
                                     throw new SyntaxError('[sprintf] Invalid array index in named argument key: must be a non-negative integer');
                                 }
 

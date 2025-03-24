@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sprintf.js Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+        }
+
+        main {
+            padding-block: 2rem;
+            width: min(92%, 75rem);
+            margin-inline: auto;
+        }
+
+        p:has(> output) {
+            border: 1px solid #CACACA;
+            background-color: #e2e2e2;
+            padding: 1rem 1.5rem;
+        }
+
+        p,
+        pre {
+            margin-block: 1.5rem;
+        }
+
+        p>code {
+            display: inline-block;
+            border: 1px solid #CACACA;
+            background-color: #e2e2e2;
+            padding: .15rem .4rem;
+            border-radius: 3px;
+        }
+    </style>
+    <script src="../dist/sprintf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/prism.min.js"></script>
+</head>
+
+<body>
+    <main>
+        <article>
+            <h1>sprintf.js Demo</h1>
+            <section>
+                <h2>Flexible Argument Order</h2>
+                <p>You can specify the order of values in the formatted string independently from how they are provided. By adding a number (like <code>%1$s</code>, <code>%2$s</code>) to the placeholder, you control which value is used and in which position. This also allows reusing the same value multiple times without passing it again.</p>
+                <pre><code class="language-js">sprintf('%2$s is %1$s years old and loves %3$s', 25, 'John', 'basketball');</code></pre>
+                <p>Returns: <output id="flexible-argument-order"></output>.</p>
+                <script>
+                    const flexibleArgumentOrder = document.querySelector('#flexible-argument-order');
+
+                    try {
+                        flexibleArgumentOrder.innerText = sprintf('%2$s is %1$s years old and loves %3$s', 25, 'John', 'basketball');
+                    } catch (error) {
+                        flexibleArgumentOrder.innerText = error.message;
+                    }
+                </script>
+            </section>
+            <section>
+                <h2>Named Placeholders</h2>
+                <p>Instead of using numbers, you can reference values by their names using objects. Placeholders are wrapped in parentheses, like <code>%(keyword)s</code>, where <code>keyword</code> matches a key in the provided object. This makes the code more readable and works with nested data.</p>
+                <section>
+                    <h3>Basic usage</h3>
+                    <pre><code class="language-js">const userObj = {
+    name: 'John'
+};
+sprintf('Hello %(name)s', userObj);</code></pre>
+                    <p>Returns: <output id="named-placeholders"></output>.</p>
+                    <script>
+                        const namedPlaceholders = document.querySelector('#named-placeholders');
+
+                        try {
+                            namedPlaceholders.innerText = sprintf('Hello %(name)s', { name: 'John' });
+                        } catch (error) {
+                            namedPlaceholders.innerText = error.message;
+                        }
+                    </script>
+                </section>
+                <section>
+                    <h3>Nested data (arrays/objects)</h3>
+                    <pre><code class="language-js">const data = {
+    users: [
+        { name: 'Jane' },
+        { name: 'Jack' }
+    ]
+};
+sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);</code></pre>
+                    <p>Returns: <output id="nested-data"></output>.</p>
+                    <script>
+                        const nestedData = document.querySelector('#nested-data');
+
+                        try {
+                            nestedData.innerText = sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', { users: [{ name: 'Jane' }, { name: 'Jack' }] });
+                        } catch (error) {
+                            nestedData.innerText = error.message;
+                        }
+                    </script>
+                </section>
+            </section>
+        </article>
+    </main>
+</body>
+
+</html>

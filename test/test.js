@@ -356,10 +356,4 @@ describe('sprintfjs', () => {
             });
         });
     });
-
-    describe('Callbacks', () => {
-        it('should format a string using a callback function', () => {
-            assert.strictEqual('foobar', sprintf('%s', () => { return 'foobar'; }));
-        });
-    });
 });

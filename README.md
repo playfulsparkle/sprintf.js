@@ -103,19 +103,6 @@ sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);
 // Returns: "Hello John, Jane, and Jack"
 ```
 
-### Dynamic Values Using Functions
-
-To include values that may change when the string is created (e.g., current time), you can provide a function. The function is automatically executed to generate the final value.
-
-__Example:__
-
-```javascript
-sprintf('Today is: %s', () => new Date().toString());
-// Returns "Today is: Mon Mar 24 2025 12:34:56 GMT+0000"
-```
-
-Here, the `function () => new Date().toString()` is called when the string is formatted, ensuring the latest date is shown.
-
 ## Support
 
 ### Node.js
