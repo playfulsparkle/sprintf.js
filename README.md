@@ -120,7 +120,7 @@ Here, the `function () => new Date().toString()` is called when the string is fo
 
 ### Node.js
 
-`robotstxt.js` runs in all active Node versions (6.x+).
+`sprintf.js` runs in all active Node versions (6.x+).
 
 ### Browser Support
 
