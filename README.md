@@ -6,11 +6,13 @@ A lightweight, Open Source sprintf.js sprintf implementation written in JavaScri
 ## Installation
 
 ### NPM
+
 ```bash
     npm install @playfulsparkle/sprintf-js
 ```
 
 ### Bower
+
 ```bash
     bower install playfulsparkle/sprintf.js
 ```
@@ -19,43 +21,114 @@ A lightweight, Open Source sprintf.js sprintf implementation written in JavaScri
 
 ### `sprintf`
 
-Returns a formatted string:
+The `sprintf` function is the main formatting function, similar to the `sprintf` function found in C-like languages. It takes a format string and a variable number of arguments to be inserted into the string at specified placeholders.
+
+***Parameters:***
+
+* `format` (String): The format string. This string contains plain text and zero or more format specifiers (placeholders).
+* `...args`: One or more values that will be formatted and inserted into the `format` string according to the format specifiers.
+
+***Return Value:***
+
+* (String): The formatted string.
+
+```
+string sprintf(string format, mixed arg1?, mixed arg2?, ...)
+```
 
 ### `vsprintf`
 
-Similar to `sprintf`, but it accepts an array of arguments instead of a variadic list.
+The `vsprintf` function is a version of sprintf that accepts the arguments to be formatted as an array.
+
+***Parameters:***
+
+* `format` (String): The format string, identical to the `format` parameter in `sprintf`.
+* `argv` (Array): An array containing the values to be formatted and inserted into the `format` string.
+
+***Return Value:***
+
+* (String): The formatted string.
+
+```
+string vsprintf(string format, array argv)
+```
+
+### Difference between `sprintf` and `vsprintf`
+
+The main difference is how they receive the values to be formatted: `sprintf` takes them as individual arguments after the format string, while `vsprintf` takes them as a single array argument. `vsprintf` is useful when the arguments are already in an array.
 
 ## Format String Placeholders
 
-Placeholders in the format string are denoted by `%` and must follow a specific sequence of optional and required elements:
+The `sprintf` function uses placeholders within the format string (the first argument) to indicate where and how subsequent arguments should be inserted and formatted. Placeholders begin with a `%` character and are followed by a sequence of optional formatting options and a required type specifier.
 
-### Optional Elements:
-- **Argument Index**: A number followed by `$` selects a specific argument to use. If omitted, arguments are used in order.
-- **Sign Indicator**: A `+` forces numeric values to include a `+` or `-` sign. By default, only negative numbers show `-`.
-- **Padding Specifier**: Defines the padding character, either `0` or a character prefixed with `'`. By default, spaces are used.
-- **Alignment**: A `-` aligns output to the left; otherwise, the result is right-aligned.
-- **Width**: Specifies the minimum output length. If shorter, padding is applied. For the `j` (JSON) type, it defines indentation size.
-- **Precision**: A `.` followed by a number controls decimal precision for floating points, significant digits for `g`, or truncation for strings.
+### Optional Formatting Elements
 
-### Required Element:
-- **Type Specifier**: Determines how the value is formatted:
+These elements can appear in a placeholder in a specific order between the `%` and the type specifier.
 
-  - `%` - Outputs a literal `%`
-  - `b` - Integer in binary format
-  - `c` - Integer as an ASCII character
-  - `d` or `i` - Signed decimal integer
-  - `e` - Floating point in scientific notation
-  - `u` - Unsigned decimal integer
-  - `f` - Floating point as-is
-  - `g` - Floating point with adaptive formatting
-  - `o` - Integer in octal format
-  - `s` - String output
-  - `t` - Boolean (`true` or `false`)
-  - `T` - Data type of the argument
-  - `v` - Primitive value of the argument
-  - `x` - Integer in lowercase hexadecimal
-  - `X` - Integer in uppercase hexadecimal
-  - `j` - JavaScript object or array in JSON format
+1.  **Argument Index (Positional Specifier)**:
+    * **Syntax:** A number (starting from 1) followed by a `$` (e.g., `%2$s`).
+    * **Description:** Explicitly selects which argument to use for the current placeholder. If omitted, arguments are used sequentially in the order they are provided to `sprintf`.
+    * **Example:** `sprintf('%2$s, %1$s!', 'Hello', 'World')` will output `"World, Hello!"`.
+
+2.  **Sign Indicator**:
+    * **Syntax:** A `+` character (e.g., `%+d`).
+    * **Description:** Forces numeric values (integers and floats) to always display a sign, either `+` for positive numbers or `-` for negative numbers. By default, only negative numbers show a sign.
+    * **Example:** `sprintf('%+d', 5)` will output `"+5"`, and `sprintf('%+d', -5)` will output `"-5"`.
+
+3.  **Padding Specifier**:
+    * **Syntax:** Either a `0` or a single quote `'` followed by any character (e.g., `%05d`, `%'*5s`).
+    * **Description:** Specifies the character used for padding the output to reach the desired width.
+        * Using `0` pads with leading zeros for numeric types.
+        * Using `'` followed by a character pads with that specific character.
+    * **Examples:**
+        * `sprintf('%05d', 12)` will output `"00012"`.
+        * `sprintf("%'*5s", 'abc')` will output `"**abc"`.
+
+4.  **Alignment**:
+    * **Syntax:** A `-` character (e.g., `%-10s`).
+    * **Description:** Aligns the output to the left within the specified field width. If the `-` is omitted, the output is right-aligned by default.
+    * **Example:** `sprintf('%-10s', 'hello')` will output `"hello     "`, and `sprintf('%10s', 'hello')` will output `"     hello"`.
+
+5.  **Width**:
+    * **Syntax:** A positive integer (e.g., `%10s`, `%5j`).
+    * **Description:** Specifies the minimum number of characters to output. If the value to be formatted is shorter than the width, it will be padded (using the padding character and alignment). For the `j` (JSON) type, this number defines the indentation level (number of spaces).
+    * **Examples:**
+        * `sprintf('%10s', 'test')` will output `"      test"`.
+        * `sprintf('%5j', { a: 1 })` will output `"{\n     "a": 1\n}"`.
+
+6.  **Precision**:
+    * **Syntax:** A period `.` followed by a non-negative integer (e.g., `%.2f`, `%.5g`, `%.10s`).
+    * **Description:** Controls the precision of the output depending on the type specifier:
+        * For floating-point types (`e`, `f`): Specifies the number of digits to appear after the decimal point.
+        * For the `g` type: Specifies the number of significant digits.
+        * For the `s`, `t`, `T`, and `v` types: Specifies the maximum number of characters to output (truncates the string if it's longer).
+    * **Examples:**
+        * `sprintf('%.2f', 3.14159)` will output `"3.14"`.
+        * `sprintf('%.5g', 123.45678)` will output `"123.46"`.
+        * `sprintf('%.5s', 'This is a long string')` will output `"This "`.
+
+### Required Type Specifier
+
+This single character at the end of the placeholder determines how the corresponding argument will be interpreted and formatted.
+
+| Specifier | Description                                           | Example                                     | Output          |
+| --------- | ----------------------------------------------------- | ------------------------------------------- | --------------- |
+| `%`       | Outputs a literal percent sign.                       | `sprintf('%%')`                             | `%`             |
+| `b`       | Integer in binary format.                             | `sprintf('%b', 10)`                         | `1010`          |
+| `c`       | Integer as an ASCII character.                        | `sprintf('%c', 65)`                         | `A`             |
+| `d` or `i`| Signed decimal integer.                               | `sprintf('%d', 123)`                        | `123`           |
+| `e`       | Floating point in scientific notation.                | `sprintf('%e', 123.45)`                     | `1.2345e+2`     |
+| `u`       | Unsigned decimal integer.                             | `sprintf('%u', -5)`                         | `4294967291`    |
+| `f`       | Floating point as-is (with optional precision).       | `sprintf('%.2f', 3.14159)`                  | `3.14`          |
+| `g`       | Floating point with adaptive formatting.              | `sprintf('%.3g', 1234.56)`                  | `1.23e+3`       |
+| `o`       | Integer in octal format.                              | `sprintf('%o', 10)`                         | `12`            |
+| `s`       | String output.                                        | `sprintf('%s', 'hello')`                    | `hello`         |
+| `t`       | Boolean (`"true"` or `"false"`).                      | `sprintf('%t', true)`                       | `true`          |
+| `T`       | Data type of the argument (lowercase).                | `sprintf('%T', [])`                         | `array`         |
+| `v`       | Primitive value of the argument (using `valueOf()`).  | `sprintf('%v', new Number(5))`              | `5`             |
+| `x`       | Integer in lowercase hexadecimal.                     | `sprintf('%x', 255)`                        | `ff`            |
+| `X`       | Integer in uppercase hexadecimal.                     | `sprintf('%X', 255)`                        | `FF`            |
+| `j`       | JavaScript object or array in JSON format.            | `sprintf('%j', { a: 1, b: 2 })`             | `{"a":1,"b":2}` |
 
 ## Features
 
@@ -114,7 +187,7 @@ sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);
 This library is written using modern ECMAScript 2015 (ES6) features. It is expected to work in the following browser versions and later:
 
 | Browser                  | Minimum Supported Version |
-|--------------------------|---------------------------|
+| ------------------------ | ------------------------- |
 | **Desktop Browsers**     |                           |
 | Chrome                   | 1                         |
 | Edge                     | 12                        |

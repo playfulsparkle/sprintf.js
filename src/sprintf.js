@@ -57,15 +57,15 @@
 
     /**
      * Main formatting function similar to C's sprintf
-     * @param {string} key - Format string containing placeholders
+     * @param {string} format - Format string containing placeholders
      * @param {...*} args - Values to format
      * @returns {string} Formatted string
      * @throws {Error} On invalid arguments or formatting errors
      */
-    function sprintf(key) {
-        const parseResult = parse(key);
+    function sprintf(format) {
+        const parseResult = sprintfParse(format);
         // Replaced Array.from(arguments).slice(1) in favor of Array.prototype.slice.call(arguments, 1)
-        return format(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed);
+        return sprintfFormat(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed);
     }
 
     /**
@@ -80,14 +80,14 @@
 
     /**
      * Core formatting engine that processes parsed format tree
-     * @param {Array<string|Placeholder>} parseTree - Result from parse()
+     * @param {Array<string|Placeholder>} parseTree - Result from sprintfParse()
      * @param {Array} argv - Values to format
      * @param {boolean} usesNamedArgs - Whether format uses named arguments
      * @returns {string} Formatted string
      * @throws {TypeError} On invalid numeric arguments
      * @throws {Error} On missing named arguments
      */
-    function format(parseTree, argv, usesNamedArgs) {
+    function sprintfFormat(parseTree, argv, usesNamedArgs) {
         // Because of removing __proto__ parsetree can be undefined
         if (typeof parseTree === 'undefined') return '';
 
@@ -183,7 +183,7 @@
                     arg = placeholder.precision ? parseFloat(arg).toFixed(placeholder.precision) : parseFloat(arg);
                     break;
                 case 'g': // General format
-                    arg = placeholder.precision ? String(Number(arg.toPrecision(placeholder.precision))) : parseFloat(arg);
+                    arg = placeholder.precision ? String(arg.toPrecision(placeholder.precision)) : parseFloat(arg);
                     break;
                 case 'o': // Octal
                     arg = (parseInt(arg, 10) >>> 0).toString(8);
@@ -244,7 +244,7 @@
      * @returns {{parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}}
      * @throws {SyntaxError} On invalid format syntax
      */
-    function parse(format) {
+    function sprintfParse(format) {
         if (sprintfCache.has(format)) {
             return sprintfCache.get(format);
         }
