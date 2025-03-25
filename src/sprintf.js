@@ -40,7 +40,7 @@
      * Cache for parsed format strings to improve performance
      * @type {Map<string, {parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}>}
      */
-    const sprintfCache = new Map();
+    const sprintfCache = createCache(); // Optimized version of new Map();
 
     /**
      * @typedef {Object} Placeholder
@@ -64,7 +64,8 @@
      */
     function sprintf(key) {
         const parseResult = parse(key);
-        return format(parseResult.parseTree, Array.from(arguments).slice(1), parseResult.namedUsed);
+        // Replaced Array.from(arguments).slice(1) in favor of Array.prototype.slice.call(arguments, 1)
+        return format(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed);
     }
 
     /**
@@ -87,9 +88,12 @@
      * @throws {Error} On missing named arguments
      */
     function format(parseTree, argv, usesNamedArgs) {
+        // Because of removing __proto__ parsetree can be undefined
+        if (typeof parseTree === 'undefined') return '';
+
         let cursor = 0;
         const treeLength = parseTree.length;
-        const namedArgs = Object.create(null);
+        const namedArgs = { __proto__: null };
         let output = '';
 
         // Extract named arguments and filter positional arguments if named are used
@@ -97,10 +101,16 @@
 
         if (usesNamedArgs) {
             for (let idx = 0; idx < argv.length; idx++) {
-                if (argv[idx] !== null && typeof argv[idx] === 'object' && !Array.isArray(argv[idx])) {
-                    Object.assign(namedArgs, argv[idx]);
+                const arg = argv[idx];
+
+                if (
+                    arg !== null &&
+                    typeof arg === 'object' &&
+                    Object.prototype.toString.call(arg) !== '[object Array]'
+                ) { // Replace Array.isArray in favor of Object.prototype.toString.call(arg) === '[object Array]'
+                    objectAssign(namedArgs, arg);
                 } else {
-                    filteredArgv.push(argv[idx]);
+                    filteredArgv.push(arg);
                 }
             }
 
@@ -219,7 +229,7 @@
 
                 const padCharacter = placeholder.padChar ? placeholder.padChar === '0' ? '0' : placeholder.padChar.charAt(1) : ' ';
                 const padLength = placeholder.width - (numeralPrefix + arg).length;
-                const pad = placeholder.width && padLength > 0 ? padCharacter.repeat(padLength) : '';
+                const pad = placeholder.width && padLength > 0 ? stringRepeat(padCharacter, padLength) : ''; // padCharacter.repeat(padLength) replaced in favor of custom function
 
                 output += placeholder.align ? numeralPrefix + arg + pad : (padCharacter === '0' ? numeralPrefix + pad + arg : pad + numeralPrefix + arg);
             }
@@ -331,6 +341,124 @@
         sprintfCache.set(format, result);
 
         return result;
+    }
+
+    /**
+     * Copies the values of all of the enumerable own properties from one or
+     * more source objects to a target object. It will return the target object.
+     * @param {object} target The target object to apply the sources' properties to.
+     * @param {...object} sources The source object(s) from which to copy properties.
+     * @returns {object} The target object.
+     * @throws {TypeError} If target is null or undefined.
+     * @throws {TypeError} If no arguments are provided.
+     */
+    function objectAssign(target) {
+        if (arguments.length < 1) {
+            throw new TypeError('objectAssign expects at least one argument');
+        }
+
+        if (target === null || target === undefined) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        for (let idx = 1; idx < arguments.length; idx++) {
+            const source = arguments[idx];
+
+            if (source === null || source === undefined) {
+                continue;
+            }
+
+            for (const key in source) {
+                if (Object.prototype.hasOwnProperty.call(source, key)) { // Only copy properties that are directly on the source object (not inherited)
+                    target[key] = source[key];
+                }
+            }
+        }
+
+        return target;
+    }
+
+    /**
+     * Constructs and returns a new string which contains the specified number
+     * of copies of the string on which it was called, concatenated together.
+     * @param {string} character The string to be repeated.
+     * @param {number} count An integer indicating the number of times to repeat the string.
+     * @returns {string} A new string containing the specified number of copies of the given character.
+     * @throws {RangeError} If count is negative.
+     */
+    function stringRepeat(character, count) {
+        if (count < 0) {
+            throw new RangeError('Repeat count must be non-negative');
+        }
+
+        if (count === 0) {
+            return '';
+        }
+
+        let result = '';
+
+        while (count) {
+            if (count & 1) { // Bitwise operations to handle count
+                result += character;
+            }
+
+            count >>= 1; // Bitwise right shift (equivalent to count = Math.floor(count / 2))
+
+            character += character;
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates and returns a simple cache object.
+     * @returns {object} An object with methods for managing a cache.
+     */
+    function createCache() {
+        let cache = { __proto__: null };
+
+        return {
+            /**
+             * Retrieves a value from the cache.
+             * @param {string} key The key of the value to retrieve.
+             * @returns {*} The value associated with the key, or undefined if not found.
+             */
+            get: function (key) {
+                return cache[key];
+            },
+            /**
+             * Stores a value in the cache.
+             * @param {string} key The key to store the value under.
+             * @param {*} value The value to store.
+             * @returns {this} The cache object for chaining.
+             */
+            set: function (key, value) {
+                cache[key] = value;
+
+                return this;
+            },
+            /**
+             * Checks if a key exists in the cache.
+             * @param {string} key The key to check for.
+             * @returns {boolean} True if the key exists in the cache, false otherwise.
+             */
+            has: function (key) {
+                return key in cache;
+            },
+            /**
+             * Removes a key and its associated value from the cache.
+             * @param {string} key The key to remove.
+             */
+            delete: function (key) {
+                delete cache[key];
+            },
+            /**
+             * Clears all entries from the cache.
+             */
+            clear: function () {
+                cache = { __proto__: null };
+            }
+        };
     }
 
     // Module export setup

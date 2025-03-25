@@ -107,30 +107,30 @@ sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);
 
 ### Node.js
 
-`sprintf.js` runs in all active Node versions (6.x+).
+`sprintf.js` runs in all active Node versions (4+).
 
 ### Browser Support
 
-This library is written using modern JavaScript ES2015 (ES6) features. It is expected to work in the following browser versions and later:
+This library is written using modern ECMAScript 2015 (ES6) features. It is expected to work in the following browser versions and later:
 
 | Browser                  | Minimum Supported Version |
 |--------------------------|---------------------------|
 | **Desktop Browsers**     |                           |
-| Chrome                   | 45                        |
+| Chrome                   | 1                         |
 | Edge                     | 12                        |
-| Firefox                  | 34                        |
-| Opera                    | 32                        |
-| Safari                   | 9                         |
+| Firefox                  | 1                         |
+| Opera                    | 5                         |
+| Safari                   | 1                         |
 | **Mobile Browsers**      |                           |
-| Chrome Android           | 45                        |
-| Firefox for Android      | 34                        |
-| Opera Android            | 32                        |
-| Safari on iOS            | 9                         |
-| Samsung Internet         | 5                         |
-| WebView Android          | 45                        |
-| WebView on iOS           | 9                         |
+| Chrome Android           | 18                        |
+| Firefox for Android      | 4                         |
+| Opera Android            | 10.1                      |
+| Safari on iOS            | 1                         |
+| Samsung Internet         | 1                         |
+| WebView Android          | 4.4                       |
+| WebView on iOS           | 1                         |
 | **Other**                |                           |
-| Node.js                  | 4                         |
+| Node.js                  | 0.10                      |
 
 ## License
 
