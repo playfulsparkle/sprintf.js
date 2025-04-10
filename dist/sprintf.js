@@ -1,5 +1,5 @@
 /*! @playfulsparkle/sprintf-js v1.0.3 | Copyright (c) 2025-present, Zsolt Oroszlány <hello@playfulsparkle.com> | BSD-3-Clause */
-/* global window, exports, define */
+/* global BigInt, window, exports, define */
 
 !function () {
     'use strict';
@@ -94,10 +94,12 @@
         // Because of removing __proto__ parsetree can be undefined
         if (typeof parseTree === 'undefined') return '';
 
+        const MAXINT = 0x80000000;
         let cursor = 0;
         const treeLength = parseTree.length;
         const namedArgs = { __proto__: null };
         let output = '';
+        let hex, high;
 
         // Extract named arguments and filter positional arguments if named are used
         const filteredArgv = [];
@@ -168,6 +170,7 @@
             }
 
             let isPositive;
+
             let numeralPrefix = '';
 
             // Format according to type
@@ -204,14 +207,17 @@
                     break;
                 case 's': // String
                     arg = String(arg);
+
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 't': // Boolean
                     arg = String(!!arg);
+
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'T': // Type detection
                     arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
+
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'u': // Unsigned integer
@@ -219,13 +225,22 @@
                     break;
                 case 'v': // Primitive value
                     arg = String(arg.valueOf());
+
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
-                case 'x': // Hexadecimal (lowercase)
-                    arg = (parseInt(arg, 10) >>> 0).toString(16);
-                    break;
-                case 'X': // Hexadecimal (uppercase)
-                    arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
+                case 'x':
+                case 'X':
+                    hex = (parseInt(arg, 10) >>> 0).toString(16);
+
+                    if (arg && arg.high) {
+                        hex = (parseInt(arg.high, 10) >>> 0).toString(16) + hex.padStart(8, '0');
+                    } else if (parseInt(arg, 10) > MAXINT - 1 || parseInt(arg, 10) < -MAXINT) {
+                        high = BigInt.asUintN(32, BigInt(arg) >> BigInt(32)).toString(16);
+
+                        hex = parseInt(high, 16) !== 0 ? high + hex.padStart(8, '0') : hex;
+                    }
+
+                    arg = placeholder.type === 'X' ? hex.toUpperCase() : hex;
                     break;
                 default:
                     throw new Error(`[sprintf] Unknown type: ${placeholder.type}`);
@@ -238,11 +253,16 @@
                 // Handle numeric sign prefix
                 if (re.number.test(placeholder.type) && (!isPositive || placeholder.numeralPrefix)) {
                     numeralPrefix = isPositive ? '+' : '-';
+
                     arg = String(arg).replace(re.numeralPrefix, '');
+                } else {
+                    numeralPrefix = '';
                 }
 
                 const padCharacter = placeholder.padChar ? placeholder.padChar === '0' ? '0' : placeholder.padChar.charAt(1) : ' ';
+
                 const padLength = placeholder.width - (numeralPrefix + arg).length;
+
                 const pad = placeholder.width && padLength > 0 ? stringRepeat(padCharacter, padLength) : ''; // padCharacter.repeat(padLength) replaced in favor of custom function
 
                 output += placeholder.align ? numeralPrefix + arg + pad : (padCharacter === '0' ? numeralPrefix + pad + arg : pad + numeralPrefix + arg);

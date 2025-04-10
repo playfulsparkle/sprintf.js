@@ -7,8 +7,6 @@ const assert = require('assert'),
     { sprintf } = sprintfjs;
 
 describe('sprintfjs', () => {
-    const pi = 3.141592653589793;
-
     describe('Simple Placeholders', () => {
         it('should format a percentage sign', () => {
             assert.strictEqual('%', sprintf('%%'));
@@ -63,7 +61,7 @@ describe('sprintfjs', () => {
         });
 
         it('should format a number in shortest notation (lowercase)', () => {
-            assert.strictEqual('3.141592653589793', sprintf('%g', pi));
+            assert.strictEqual('3.141592653589793', sprintf('%g', Math.PI));
         });
 
         it('should format an octal number', () => {
@@ -260,15 +258,15 @@ describe('sprintfjs', () => {
             });
 
             it('should format pi with shortest notation and precision', () => {
-                assert.strictEqual('3.14159', sprintf('%.6g', pi));
+                assert.strictEqual('3.14159', sprintf('%.6g', Math.PI));
             });
 
             it('should format pi with shortest notation and different precision', () => {
-                assert.strictEqual('3.14', sprintf('%.3g', pi));
+                assert.strictEqual('3.14', sprintf('%.3g', Math.PI));
             });
 
             it('should format pi with shortest notation and another precision', () => {
-                assert.strictEqual('3', sprintf('%.1g', pi));
+                assert.strictEqual('3', sprintf('%.1g', Math.PI));
             });
 
             it('should format a negative number with leading zeros and a plus sign', () => {
@@ -361,6 +359,12 @@ describe('sprintfjs', () => {
                 sprintf.allowComputedValue = true;
 
                 assert.strictEqual('foobar', sprintf('%s', () => { return 'foobar'; }));
+            });
+        });
+
+        describe('Other', () => {
+            it('should return large number', () => {
+                assert.equal('2308249009', sprintf('%X', 150460469257));
             });
         });
     });
