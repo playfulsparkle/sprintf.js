@@ -355,5 +355,13 @@ describe('sprintfjs', () => {
                 assert.strictEqual('    x', sprintf('%5.1s', 'xxxxxx'));
             });
         });
+
+        describe('Callbacks', () => {
+            it('should format a string using a callback function', () => {
+                sprintf.allowComputedValue = true;
+
+                assert.strictEqual('foobar', sprintf('%s', () => { return 'foobar'; }));
+            });
+        });
     });
 });

@@ -177,6 +177,52 @@ sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);
 // Returns: "Hello John, Jane, and Jack"
 ```
 
+### Computed values
+
+To generate values dynamically, you can supply a function. This function will be invoked without arguments, and its return value will be treated as the computed value.
+
+We have exposed the `allowComputedValue` property, which allows you to enable or disable this functionality. If you intend to use `sprintf` with function arguments for dynamic values, you must explicitly enable this feature by setting `sprintf.allowComputedValue = true`. This functionality is disabled by default due to potential security concerns.
+
+**Security Consideration:**
+
+Enabling computed values introduces a risk if the format string or the arguments passed to `sprintf` come from an untrusted source. For example, a malicious actor could potentially inject a format string with a placeholder that triggers the execution of a function they also control.
+
+**Example of Potential Risk:**
+
+While this is a simplified illustration, imagine a scenario where user input could influence the arguments passed to `sprintf`:
+
+```javascript
+// WARNING: Enabling computed values with untrusted input is risky!
+sprintf.allowComputedValue = true;
+
+let userInput = '%s'; // Could be controlled by a malicious user
+
+let maliciousFunction = () => {
+  // In a real scenario, this could perform harmful actions
+  console.log('Malicious function executed!');
+  return 'dangerous output';
+};
+
+let formattedString = sprintf(userInput, maliciousFunction);
+
+console.log(formattedString); // Output: "dangerous output"
+```
+
+In this example, if `userInput` was crafted to include `%s` and a malicious function was somehow passed as an argument, enabling `allowComputedValue` would lead to the execution of that function.
+
+**Example (Safe Usage):**
+
+When using computed values with trusted input:
+
+```javascript
+sprintf.allowComputedValue = true;
+
+sprintf('Current date and time: %s', function() { return new Date().toString(); })
+// Returns: "Current date and time: Thu Apr 10 2025 13:25:07 GMT+0200 (Central European Summer Time)"
+```
+
+Remember to enable `sprintf.allowComputedValue = true;` only when you are certain about the safety and origin of the format string and its arguments.
+
 ## Support
 
 ### Node.js

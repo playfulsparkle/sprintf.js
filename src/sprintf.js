@@ -36,6 +36,8 @@
         allowedNumericIndex: /^\d+$/
     };
 
+    let allowComputedValue = false;
+
     /**
      * Cache for parsed format strings to improve performance
      * @type {Map<string, {parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}>}
@@ -146,6 +148,17 @@
                 arg = argv[placeholder.paramNo - 1];
             } else { // Implicit positional argument
                 arg = argv[cursor++];
+            }
+
+            // Handle function arguments for non-type/non-primitive specifiers
+            if (typeof allowComputedValue === 'boolean' && allowComputedValue) {
+                if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
+                    try {
+                        arg = arg();
+                    } catch (e) {
+                        throw new Error('[sprintf] Failed to execute function argument');
+                    }
+                }
             }
 
             // Validate numeric arguments for numeric placeholders
@@ -463,15 +476,21 @@
 
     // Module export setup
     const sprintfLib = {
+        get allowComputedValue() { return allowComputedValue; },
+        set allowComputedValue(value) { allowComputedValue = value; },
         sprintf: sprintf,
         vsprintf: vsprintf
     };
 
     // Browser global export
     if (typeof window !== 'undefined') {
-        // Safely expose to window without overwriting
         window.sprintf = sprintf;
         window.vsprintf = vsprintf;
+
+        Object.defineProperty(window.sprintf, 'allowComputedValue', {
+            get: () => allowComputedValue,
+            set: (value) => { allowComputedValue = value; }
+        });
 
         // AMD module definition
         if (typeof define === 'function' && define.amd) {
@@ -483,6 +502,11 @@
     if (typeof exports !== 'undefined') {
         exports.sprintf = sprintf;
         exports.vsprintf = vsprintf;
+
+        Object.defineProperty(exports.sprintf, 'allowComputedValue', {
+            get: () => allowComputedValue,
+            set: (value) => { allowComputedValue = value; }
+        });
     }
 
     // Node.js module export
