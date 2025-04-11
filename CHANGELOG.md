@@ -2,6 +2,11 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.0.7] - 2025-04-12
+
+* **Fix:** Ensured that an empty precision (e.g., `%.f`) defaults to a precision of zero, aligning with standard formatting conventions.
+* **Fix:** Correctly implemented the formatting of `BigInt` values as decimal strings.
+
 ## [1.0.6] - 2025-04-12
 
 A new `getStats()` method is now available via the chainable configuration. First, configure using `sprintf.config()`, then apply your format string using the `.sprintf()` method on the configuration object. Finally, calling `.getStats()` on the same configuration object will return an object detailing the placeholder usage, including counts for total, named, positional, and sequential positional placeholders. This allows for programmatic analysis of your format strings.
