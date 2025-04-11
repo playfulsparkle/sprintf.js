@@ -374,6 +374,15 @@ describe('sprintfjs', () => {
                 assert.equal('9999999999999999999999999999999999999999', sprintf("%i", 9999999999999999999999999999999999999999n));
             });
 
+            it('should treat \'%.f\' as having zero precision for floating-point formatting', () => {
+                assert.equal('2', sprintf('%.f', 2));
+                assert.equal('2', sprintf('%.0f', 2));
+            });
+
+            it('should handle large precision values (e.g., 99) with \'%.f\' without throwing a RangeError', () => {
+                assert.equal('1.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', sprintf("%.99f", 1));
+            });
+
             it('should format a large number exceeding 32 bits correctly as a hexadecimal string', () => {
                 assert.equal('2308249009', sprintf('%X', 150460469257));
             });
