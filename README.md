@@ -177,6 +177,22 @@ sprintf('Hello %s, %(users[0].name)s, and %(users[1].name)s', 'John', data);
 // Returns: "Hello John, Jane, and Jack"
 ```
 
+### Named and positional placeholder
+
+`sprintf` offers exceptional flexibility by allowing you to utilize **named placeholders** (like `%(keyword)s`), **numbered positional placeholders** (such as `%1$s`, `%2$s`), and **sequential positional placeholders** (represented by `%s`). This comprehensive support enables you to choose the most appropriate style, or even combine them for complex formatting scenarios, enhancing both readability and maintainability.
+
+* Basic usage:
+
+__Example:__
+
+```javascript
+const data = {
+    'name': 'Polly'
+};
+sprintf('%(name)s %2$s a %1$s', 'cracker', 'wants', data);
+// Returns: "Polly wants a cracker"
+```
+
 ### Computed values
 
 To generate values dynamically, you can supply a function. This function will be invoked without arguments, and its return value will be treated as the computed value.

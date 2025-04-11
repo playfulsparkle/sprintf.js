@@ -38,6 +38,10 @@
 
     let allowComputedValue = false;
 
+    let throwErrorOnUnmatched = false;
+
+    let preserveUnmatchedPlaceholder = false;
+
     /**
      * Cache for parsed format strings to improve performance
      * @type {Map<string, {parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}>}
@@ -93,12 +97,14 @@
         // Because of removing __proto__ parsetree can be undefined
         if (typeof parseTree === 'undefined') return '';
 
-        const MAXINT = 0x80000000;
+        const MAX_UINT32 = 0xFFFFFFFF;
+        const MAX_INT32 = 0x7FFFFFFF;
+        const MIN_INT32 = -0x80000000;
+
         let cursor = 0;
         const treeLength = parseTree.length;
         const namedArgs = { __proto__: null };
         let output = '';
-        let hex, high;
 
         // Extract named arguments and filter positional arguments if named are used
         const filteredArgv = [];
@@ -145,11 +151,38 @@
                     }
 
                     arg = arg[placeholderKey];
+
+                    if (throwErrorOnUnmatched && arg === undefined) {
+                        throw new SyntaxError(`[sprintf] Missing argument ${placeholderKey}`);
+                    }
+
+                    if (preserveUnmatchedPlaceholder && arg === undefined) {
+                        arg = placeholder.placeholder;
+                    }
                 }
+
             } else if (placeholder.paramNo) { // Explicit positional argument
-                arg = argv[placeholder.paramNo - 1];
+                const paramIndex = placeholder.paramNo - 1;
+
+                if (throwErrorOnUnmatched && paramIndex >= argv.length) {
+                    throw new SyntaxError(`[sprintf] Missing argument ${placeholder.paramNo}`);
+                }
+
+                arg = argv[paramIndex];
+
+                if (preserveUnmatchedPlaceholder && arg === undefined) {
+                    arg = placeholder.placeholder;
+                }
             } else { // Implicit positional argument
+                if (throwErrorOnUnmatched && cursor >= argv.length) {
+                    throw new SyntaxError('[sprintf] Too few arguments');
+                }
+
                 arg = argv[cursor++];
+
+                if (preserveUnmatchedPlaceholder && arg === undefined) {
+                    arg = placeholder.placeholder;
+                }
             }
 
             // Handle function arguments for non-type/non-primitive specifiers
@@ -172,6 +205,8 @@
 
             let numeralPrefix = '';
 
+            let hex;
+
             // Format according to type
             if (re.number.test(placeholder.type)) {
                 isPositive = arg >= 0;
@@ -187,7 +222,7 @@
                     break;
                 case 'd': // Integer
                 case 'i':
-                    arg = parseInt(arg, 10);
+                    arg = Math.trunc(Number(arg));
                     break;
                 case 'j': // JSON
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
@@ -232,11 +267,20 @@
                     hex = (parseInt(arg, 10) >>> 0).toString(16);
 
                     if (arg && arg.high) {
+                        // Handle special objects with 'high' property (likely for 64-bit integers)
                         hex = (parseInt(arg.high, 10) >>> 0).toString(16) + hex.padStart(8, '0');
-                    } else if (parseInt(arg, 10) > MAXINT - 1 || parseInt(arg, 10) < -MAXINT) {
-                        high = BigInt.asUintN(32, BigInt(arg) >> BigInt(32)).toString(16);
+                    } else if (Number(arg) > MAX_INT32 || Number(arg) < MIN_INT32) {
+                        // Handle values outside 32-bit signed integer range using BigInt
+                        try {
+                            // Use BigInt for large number handling
+                            const bigIntValue = BigInt(arg);
+                            const highBits = bigIntValue >> BigInt(32);
+                            const highHex = (highBits & BigInt(MAX_UINT32)).toString(16);
 
-                        hex = parseInt(high, 16) !== 0 ? high + hex.padStart(8, '0') : hex;
+                            hex = highBits !== BigInt(0) ? highHex + hex.padStart(8, '0') : hex;
+                        } catch (e) {
+                            // Fallback if BigInt fails (e.g., on older browsers), keep the original hex value
+                        }
                     }
 
                     arg = placeholder.type === 'X' ? hex.toUpperCase() : hex;
@@ -498,6 +542,10 @@
     const sprintfLib = {
         get allowComputedValue() { return allowComputedValue; },
         set allowComputedValue(value) { allowComputedValue = value; },
+        get preserveUnmatchedPlaceholder() { return preserveUnmatchedPlaceholder; },
+        set preserveUnmatchedPlaceholder(value) { preserveUnmatchedPlaceholder = value; },
+        get throwErrorOnUnmatched() { return throwErrorOnUnmatched; },
+        set throwErrorOnUnmatched(value) { throwErrorOnUnmatched = value; },
         sprintf: sprintf,
         vsprintf: vsprintf
     };
@@ -510,6 +558,16 @@
         Object.defineProperty(window.sprintf, 'allowComputedValue', {
             get: () => allowComputedValue,
             set: (value) => { allowComputedValue = value; }
+        });
+
+        Object.defineProperty(window.sprintf, 'preserveUnmatchedPlaceholder', {
+            get: () => preserveUnmatchedPlaceholder,
+            set: (value) => { preserveUnmatchedPlaceholder = value; }
+        });
+
+        Object.defineProperty(window.sprintf, 'throwErrorOnUnmatched', {
+            get: () => throwErrorOnUnmatched,
+            set: (value) => { throwErrorOnUnmatched = value; }
         });
 
         // AMD module definition
@@ -526,6 +584,16 @@
         Object.defineProperty(exports.sprintf, 'allowComputedValue', {
             get: () => allowComputedValue,
             set: (value) => { allowComputedValue = value; }
+        });
+
+        Object.defineProperty(exports.sprintf, 'preserveUnmatchedPlaceholder', {
+            get: () => preserveUnmatchedPlaceholder,
+            set: (value) => { preserveUnmatchedPlaceholder = value; }
+        });
+
+        Object.defineProperty(exports.sprintf, 'throwErrorOnUnmatched', {
+            get: () => throwErrorOnUnmatched,
+            set: (value) => { throwErrorOnUnmatched = value; }
         });
     }
 

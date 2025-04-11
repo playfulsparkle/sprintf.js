@@ -1,7 +1,7 @@
 {
     "name": "sprintf.js",
     "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "main": [
         "dist/sprintf.min.js",
         "dist/angular-sprintf.min.js"

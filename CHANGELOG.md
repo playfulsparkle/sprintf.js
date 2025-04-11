@@ -2,6 +2,14 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.0.4] - 2025-04-11
+
+* **Added `allowComputedValue` option:** This feature enables the use of function return values as arguments during string formatting.
+* **Added `throwErrorOnUnmatched` option:** When enabled, this option will raise a `SyntaxError` if a placeholder in the format string does not have a corresponding defined argument value.
+* **Added `preserveUnmatchedPlaceholder` option:** This option allows the format string to retain any placeholders (such as `%(name)s`, `%1$s`, or `%s`) for which no matching argument is provided.
+* **Fix:** Corrected integer formatting (`%d`) for small floating-point numbers with exponents (e.g., `9.9999e-7` now correctly outputs `0`).
+* **Fix:** Improved hexadecimal formatting (`%x`, `%X`) for numbers exceeding 32-bit. Enhanced handling for large integers via `BigInt` and objects with a `high` property, ensuring accurate conversion.
+
 ## [1.0.3] - 2025-04-10
 
 **Change:** Reverted the function as a dynamic value functionality. This version reverts to using `typeof arg === 'function'` for identifying function arguments. This approach is generally considered more secure and reliable in JavaScript for the following reasons:

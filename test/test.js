@@ -100,6 +100,14 @@ describe('sprintfjs', () => {
             assert.strictEqual('Hello world!', sprintf('Hello %(who)s!', { who: 'world' }));
         });
 
+        it('should format named and positional arguments', () => {
+            assert.strictEqual('Polly wants a cracker', sprintf('%(name)s %s a %s', 'wants', 'cracker', { 'name': 'Polly' }));
+        });
+
+        it('should format named and positional (index) arguments', () => {
+            assert.strictEqual('Polly wants a cracker', sprintf('%(name)s %2$s a %1$s', 'cracker', 'wants', { 'name': 'Polly' }));
+        });
+
         describe('%t Placeholder (Boolean)', () => {
             it('should format true as "true"', () => {
                 assert.strictEqual('true', sprintf('%t', true));
@@ -365,6 +373,20 @@ describe('sprintfjs', () => {
         describe('Other', () => {
             it('should return large number', () => {
                 assert.equal('2308249009', sprintf('%X', 150460469257));
+            });
+
+            it('should return 0 for 9.9999e-7', () => {
+                assert.equal(0, sprintf('%d', 9.9999e-7));
+            });
+
+            it('should return 0 for 9.9999e-7 + 0.0001', () => {
+                assert.equal(0, sprintf('%d', 9.9999e-7 + 0.0001));
+            });
+
+            it('should return 0 for 9.9999e-7 + 0.0001', () => {
+                sprintf.preserveUnmatchedPlaceholder = true;
+                assert.equal('%(name)s number 1', sprintf('%(name)s number 1'));
+                sprintf.preserveUnmatchedPlaceholder = false;
             });
         });
     });
