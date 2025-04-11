@@ -381,8 +381,12 @@ describe('sprintfjs', () => {
                 assert.equal(0, sprintf('%d', 9.9999e-7 + 0.0001));
             });
 
-            it('should return 0 for 9.9999e-7 + 0.0001', () => {
+            it('should return %(name)s unmatched placeholder', () => {
                 assert.equal('%(name)s number 1', sprintf.config().preserveUnmatchedPlaceholder(true).sprintf('%(name)s number 1'));
+            });
+
+            it('should return return undefined for named placeholder', () => {
+                assert.equal('undefined number 1', sprintf.config().sprintf('%(name)s number 1'));
             });
         });
     });
