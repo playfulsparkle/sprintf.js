@@ -2,6 +2,10 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.0.6] - 2025-04-12
+
+A new `getStats()` method is now available via the chainable configuration. First, configure using `sprintf.config()`, then apply your format string using the `.sprintf()` method on the configuration object. Finally, calling `.getStats()` on the same configuration object will return an object detailing the placeholder usage, including counts for total, named, positional, and sequential positional placeholders. This allows for programmatic analysis of your format strings.
+
 ## [1.0.5] - 2025-04-11
 
 * This release introduces a more flexible and powerful chainable configuration API, replacing the previous individual configuration options (`allowComputedValue`, `throwErrorOnUnmatched`, `preserveUnmatchedPlaceholder`). The new system allows for granular control and reusability of formatting settings through a fluent interface. Please refer to the documentation for details on the new configuration methods.

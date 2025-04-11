@@ -388,6 +388,54 @@ describe('sprintfjs', () => {
             it('should return return undefined for named placeholder', () => {
                 assert.equal('undefined number 1', sprintf.config().sprintf('%(name)s number 1'));
             });
+
+            it('should track named and positional placeholders correctly', () => {
+                const config = sprintf.config();
+                config.sprintf('%s %s %s %s %(name)s %1$s %2$s');
+
+                assert.deepStrictEqual(config.getStats(), {
+                    totalPlaceholders: 7,
+                    totalNamedPlaceholder: 1,
+                    totalPositionalPlaceholder: 2,
+                    totalSequentialPositionalPlaceholder: 4
+                });
+            });
+
+            it('should track named placeholders correctly', () => {
+                const config = sprintf.config();
+                config.sprintf('%(firstname)s %(lastname)s');
+
+                assert.deepStrictEqual(config.getStats(), {
+                    totalPlaceholders: 2,
+                    totalNamedPlaceholder: 2,
+                    totalPositionalPlaceholder: 0,
+                    totalSequentialPositionalPlaceholder: 0
+                });
+            });
+
+            it('should track positional placeholders correctly', () => {
+                const config = sprintf.config();
+                config.sprintf('%1$s %2$s');
+
+                assert.deepStrictEqual(config.getStats(), {
+                    totalPlaceholders: 2,
+                    totalNamedPlaceholder: 0,
+                    totalPositionalPlaceholder: 2,
+                    totalSequentialPositionalPlaceholder: 0
+                });
+            });
+
+            it('should track sequential positional placeholders correctly', () => {
+                const config = sprintf.config();
+                config.sprintf('%s %s');
+
+                assert.deepStrictEqual(config.getStats(), {
+                    totalPlaceholders: 2,
+                    totalNamedPlaceholder: 0,
+                    totalPositionalPlaceholder: 0,
+                    totalSequentialPositionalPlaceholder: 2
+                });
+            });
         });
     });
 });

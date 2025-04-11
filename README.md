@@ -186,6 +186,23 @@ console.log(result2);
 
 In this example, `sprintfConfig` retains the `allowComputedValue(true)` setting, allowing you to apply it to multiple `sprintf()` calls without repeating the configuration.
 
+#### Analyzing placeholder statistic with getStats()
+
+A new `getStats()` method, accessible through the chainable configuration, allows you to analyze the placeholders in your format strings.
+
+```javascript
+const config = sprintf.config();
+config.sprintf('%s %s %s %s %(name)s %1$s %2$s');
+console.log(config.getStats());
+// Returns:
+// {
+//   totalPlaceholders: 7,
+//   totalNamedPlaceholder: 1,
+//   totalPositionalPlaceholder: 2,
+//   totalSequentialPositionalPlaceholder: 4
+// }
+```
+
 ### Flexible Argument Order
 
 You can specify the order of values in the formatted string independently from how they are provided. By adding a number (like `%1$s`, `%2$s`) to the placeholder, you control which value is used and in which position. This also allows reusing the same value multiple times without passing it again. This feature enhances the flexibility and readability of your code.

@@ -1,4 +1,4 @@
-/*! @playfulsparkle/sprintf-js v1.0.5 | Copyright (c) 2025-present, Zsolt Oroszlány <hello@playfulsparkle.com> | BSD-3-Clause */
+/*! @playfulsparkle/sprintf-js v1.0.6 | Copyright (c) 2025-present, Zsolt Oroszlány <hello@playfulsparkle.com> | BSD-3-Clause */
 /* global BigInt, window, exports, define */
 
 !function () {
@@ -71,11 +71,12 @@
      */
     function sprintf(format) {
         const options = this && this._sprintfOptions ? this._sprintfOptions : defaultOptions;
+        const stats = this && this._sprintfStats ? this._sprintfStats : { __proto__: null };
 
         const parseResult = sprintfParse(format);
 
         // Extract args and format using current options
-        return sprintfFormat(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed, options);
+        return sprintfFormat(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed, options, stats);
     }
 
     /**
@@ -86,10 +87,11 @@
      */
     function vsprintf(format, argv) {
         const options = this && this._sprintfOptions ? this._sprintfOptions : defaultOptions;
+        const stats = this && this._sprintfStats ? this._sprintfStats : { __proto__: null };
 
         // Create a temporary function with the current options
         const tempSprintf = function (fmt) {
-            return sprintfFormat(sprintfParse(fmt).parseTree, Array.prototype.slice.call(arguments, 1), sprintfParse(fmt).namedUsed, options);
+            return sprintfFormat(sprintfParse(fmt).parseTree, Array.prototype.slice.call(arguments, 1), sprintfParse(fmt).namedUsed, options, stats);
         };
 
         return tempSprintf.apply(null, [format].concat(argv || []));
@@ -102,7 +104,7 @@
      */
     function config(options) {
         // Create a fresh configuration object by cloning defaultOptions
-        const newOptions = Object.assign({}, defaultOptions);
+        const newOptions = objectAssign({ __proto__: null }, defaultOptions);
 
         // Apply passed options if any
         if (options) {
@@ -120,10 +122,20 @@
         // Create a chainable configuration object
         const chainableConfig = {
             _sprintfOptions: newOptions,
+            _sprintfStats: {
+                totalPlaceholders: 0,
+                totalNamedPlaceholder: 0,
+                totalPositionalPlaceholder: 0,
+                totalSequentialPositionalPlaceholder: 0
+            },
 
             // Method to format with current config
             sprintf: sprintf,
             vsprintf: vsprintf,
+
+            getStats: function () {
+                return this._sprintfStats;
+            },
 
             // Methods to modify configuration
             allowComputedValue: function (value) {
@@ -155,7 +167,7 @@
      * @throws {TypeError} On invalid numeric arguments
      * @throws {Error} On missing named arguments
      */
-    function sprintfFormat(parseTree, argv, usesNamedArgs, options) {
+    function sprintfFormat(parseTree, argv, usesNamedArgs, options, stats) {
         // Because of removing __proto__ parsetree can be undefined
         if (typeof parseTree === 'undefined') return '';
 
@@ -201,6 +213,8 @@
 
             let arg;
 
+            stats.totalPlaceholders++;
+
             // Get the argument value
             if (placeholder.keys) { // keyword argument
                 arg = namedArgs;
@@ -221,6 +235,8 @@
                     if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                         arg = placeholder.placeholder;
                     }
+
+                    stats.totalNamedPlaceholder++;
                 }
 
             } else if (placeholder.paramNo) { // Explicit positional argument
@@ -235,6 +251,8 @@
                 if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                     arg = placeholder.placeholder;
                 }
+
+                stats.totalPositionalPlaceholder++;
             } else { // Implicit positional argument
                 if (options.throwErrorOnUnmatched && cursor >= argv.length) {
                     throw new SyntaxError('[sprintf] Too few arguments');
@@ -245,6 +263,8 @@
                 if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                     arg = placeholder.placeholder;
                 }
+
+                stats.totalSequentialPositionalPlaceholder++;
             }
 
             // Handle function arguments for non-type/non-primitive specifiers
