@@ -278,8 +278,11 @@
             }
 
             // Validate numeric arguments for numeric placeholders
-            if (re.numericArg.test(placeholder.type) && (typeof arg !== 'number' && isNaN(arg))) {
-                throw new TypeError(`[sprintf] expecting number but found ${typeof arg}`);
+            if (re.numericArg.test(placeholder.type)) {
+                // Check if arg is a number, BigInt, or can be converted to a number
+                if (typeof arg !== 'number' && typeof arg !== 'bigint' && isNaN(arg)) { // eslint-disable-line valid-typeof
+                    throw new TypeError(`[sprintf] expecting number or BigInt but found ${typeof arg}`);
+                }
             }
 
             let isPositive;
@@ -303,7 +306,7 @@
                     break;
                 case 'd': // Integer
                 case 'i':
-                    arg = Math.trunc(Number(arg));
+                    arg = typeof arg === 'bigint' ? arg.toString() : Math.trunc(Number(arg)); // eslint-disable-line valid-typeof
                     break;
                 case 'j': // JSON
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);

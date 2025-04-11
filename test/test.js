@@ -369,24 +369,29 @@ describe('sprintfjs', () => {
         });
 
         describe('Other', () => {
-            it('should return large number', () => {
+            it('should format a BigInt value correctly as a decimal string', () => {
+                assert.equal('9999999999999999999999999999999999999999', sprintf("%d", 9999999999999999999999999999999999999999n));
+                assert.equal('9999999999999999999999999999999999999999', sprintf("%i", 9999999999999999999999999999999999999999n));
+            });
+
+            it('should format a large number exceeding 32 bits correctly as a hexadecimal string', () => {
                 assert.equal('2308249009', sprintf('%X', 150460469257));
             });
 
-            it('should return 0 for 9.9999e-7', () => {
+            it('should return 0 when formatting a very small floating-point number as a decimal integer', () => {
                 assert.equal(0, sprintf('%d', 9.9999e-7));
             });
 
-            it('should return 0 for 9.9999e-7 + 0.0001', () => {
+            it('should return 0 when formatting a slightly larger small floating-point number as a decimal integer', () => {
                 assert.equal(0, sprintf('%d', 9.9999e-7 + 0.0001));
             });
 
-            it('should return %(name)s unmatched placeholder', () => {
+            it('should preserve an unmatched named placeholder when the preserveUnmatchedPlaceholder option is enabled', () => {
                 assert.equal('%(name)s number 1', sprintf.config().preserveUnmatchedPlaceholder(true).sprintf('%(name)s number 1'));
             });
 
-            it('should return return undefined for named placeholder', () => {
-                assert.equal('undefined number 1', sprintf.config().sprintf('%(name)s number 1'));
+            it('should replace an unmatched named placeholder with \'undefined\' by default', () => {
+                assert.equal('undefined number 1', sprintf('%(name)s number 1'));
             });
 
             it('should track named and positional placeholders correctly', () => {
