@@ -2,6 +2,10 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.0.5] - 2025-04-11
+
+* This release introduces a more flexible and powerful chainable configuration API, replacing the previous individual configuration options (`allowComputedValue`, `throwErrorOnUnmatched`, `preserveUnmatchedPlaceholder`). The new system allows for granular control and reusability of formatting settings through a fluent interface. Please refer to the documentation for details on the new configuration methods.
+
 ## [1.0.4] - 2025-04-11
 
 * **Added `allowComputedValue` option:** This feature enables the use of function return values as arguments during string formatting.

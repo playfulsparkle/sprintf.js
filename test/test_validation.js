@@ -30,21 +30,15 @@ describe('sprintfjs Error Handling', () => {
 
     describe('Invalid Placeholders', () => {
         it('should throw SyntaxError for missing parameter', () => {
-            sprintf.throwErrorOnUnmatched = true;
-            assert.throws(() => { sprintf('Two params needed 1: %s 2: %s', 'one'); }, SyntaxError);
-            sprintf.throwErrorOnUnmatched = false;
+            assert.throws(() => { sprintf.config().throwErrorOnUnmatched(true).sprintf('Two params needed 1: %s 2: %s', 'one'); }, SyntaxError);
         });
 
         it('should throw SyntaxError for missing arguments by index', () => {
-            sprintf.throwErrorOnUnmatched = true;
-            assert.throws(() => { sprintf('%2$s %3$s a %1$s', 'cracker', 'Polly'); }, SyntaxError);
-            sprintf.throwErrorOnUnmatched = false;
+            assert.throws(() => { sprintf.config().throwErrorOnUnmatched(true).sprintf('%2$s %3$s a %1$s', 'cracker', 'Polly'); }, SyntaxError);
         });
 
         it('should throw SyntaxError for missing arguments by name', () => {
-            sprintf.throwErrorOnUnmatched = true;
-            assert.throws(() => { sprintf('Two params needed 1: %(first)s 2: %(second)s', { first: 'one' }); }, SyntaxError);
-            sprintf.throwErrorOnUnmatched = false;
+            assert.throws(() => { sprintf.config().throwErrorOnUnmatched(true).sprintf('Two params needed 1: %(first)s 2: %(second)s', { first: 'one' }); }, SyntaxError);
         });
 
         it('should throw SyntaxError for a single percent sign', () => {

@@ -36,11 +36,11 @@
         allowedNumericIndex: /^\d+$/
     };
 
-    let allowComputedValue = false;
-
-    let throwErrorOnUnmatched = false;
-
-    let preserveUnmatchedPlaceholder = false;
+    const defaultOptions = {
+        allowComputedValue: false,
+        throwErrorOnUnmatched: false,
+        preserveUnmatchedPlaceholder: false,
+    };
 
     /**
      * Cache for parsed format strings to improve performance
@@ -69,9 +69,12 @@
      * @throws {Error} On invalid arguments or formatting errors
      */
     function sprintf(format) {
+        const options = this && this._sprintfOptions ? this._sprintfOptions : defaultOptions;
+
         const parseResult = sprintfParse(format);
-        // Replaced Array.from(arguments).slice(1) in favor of Array.prototype.slice.call(arguments, 1)
-        return sprintfFormat(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed);
+
+        // Extract args and format using current options
+        return sprintfFormat(parseResult.parseTree, Array.prototype.slice.call(arguments, 1), parseResult.namedUsed, options);
     }
 
     /**
@@ -81,7 +84,64 @@
      * @returns {string} Formatted string
      */
     function vsprintf(format, argv) {
-        return sprintf.apply(null, [format].concat(argv || []));
+        const options = this && this._sprintfOptions ? this._sprintfOptions : defaultOptions;
+
+        // Create a temporary function with the current options
+        const tempSprintf = function (fmt) {
+            return sprintfFormat(sprintfParse(fmt).parseTree, Array.prototype.slice.call(arguments, 1), sprintfParse(fmt).namedUsed, options);
+        };
+
+        return tempSprintf.apply(null, [format].concat(argv || []));
+    }
+
+    /**
+     * Creates a chainable configuration object for sprintf
+     * @param {Object} options - Configuration options
+     * @returns {Object} A chainable configuration object
+     */
+    function config(options) {
+        // Create a fresh configuration object by cloning defaultOptions
+        const newOptions = Object.assign({}, defaultOptions);
+
+        // Apply passed options if any
+        if (options) {
+            if (typeof options.allowComputedValue === 'boolean') {
+                newOptions.allowComputedValue = options.allowComputedValue;
+            }
+            if (typeof options.throwErrorOnUnmatched === 'boolean') {
+                newOptions.throwErrorOnUnmatched = options.throwErrorOnUnmatched;
+            }
+            if (typeof options.preserveUnmatchedPlaceholder === 'boolean') {
+                newOptions.preserveUnmatchedPlaceholder = options.preserveUnmatchedPlaceholder;
+            }
+        }
+
+        // Create a chainable configuration object
+        const chainableConfig = {
+            _sprintfOptions: newOptions,
+
+            // Method to format with current config
+            sprintf: sprintf,
+            vsprintf: vsprintf,
+
+            // Methods to modify configuration
+            allowComputedValue: function (value) {
+                this._sprintfOptions.allowComputedValue = !!value;
+                return this;
+            },
+
+            throwErrorOnUnmatched: function (value) {
+                this._sprintfOptions.throwErrorOnUnmatched = !!value;
+                return this;
+            },
+
+            preserveUnmatchedPlaceholder: function (value) {
+                this._sprintfOptions.preserveUnmatchedPlaceholder = !!value;
+                return this;
+            }
+        };
+
+        return chainableConfig;
     }
 
     /**
@@ -89,11 +149,12 @@
      * @param {Array<string|Placeholder>} parseTree - Result from sprintfParse()
      * @param {Array} argv - Values to format
      * @param {boolean} usesNamedArgs - Whether format uses named arguments
+     * @param {Object} options - Configuration options
      * @returns {string} Formatted string
      * @throws {TypeError} On invalid numeric arguments
      * @throws {Error} On missing named arguments
      */
-    function sprintfFormat(parseTree, argv, usesNamedArgs) {
+    function sprintfFormat(parseTree, argv, usesNamedArgs, options) {
         // Because of removing __proto__ parsetree can be undefined
         if (typeof parseTree === 'undefined') return '';
 
@@ -152,11 +213,11 @@
 
                     arg = arg[placeholderKey];
 
-                    if (throwErrorOnUnmatched && arg === undefined) {
+                    if (options.throwErrorOnUnmatched && arg === undefined) {
                         throw new SyntaxError(`[sprintf] Missing argument ${placeholderKey}`);
                     }
 
-                    if (preserveUnmatchedPlaceholder && arg === undefined) {
+                    if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                         arg = placeholder.placeholder;
                     }
                 }
@@ -164,29 +225,29 @@
             } else if (placeholder.paramNo) { // Explicit positional argument
                 const paramIndex = placeholder.paramNo - 1;
 
-                if (throwErrorOnUnmatched && paramIndex >= argv.length) {
+                if (options.throwErrorOnUnmatched && paramIndex >= argv.length) {
                     throw new SyntaxError(`[sprintf] Missing argument ${placeholder.paramNo}`);
                 }
 
                 arg = argv[paramIndex];
 
-                if (preserveUnmatchedPlaceholder && arg === undefined) {
+                if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                     arg = placeholder.placeholder;
                 }
             } else { // Implicit positional argument
-                if (throwErrorOnUnmatched && cursor >= argv.length) {
+                if (options.throwErrorOnUnmatched && cursor >= argv.length) {
                     throw new SyntaxError('[sprintf] Too few arguments');
                 }
 
                 arg = argv[cursor++];
 
-                if (preserveUnmatchedPlaceholder && arg === undefined) {
+                if (options.preserveUnmatchedPlaceholder && arg === undefined) {
                     arg = placeholder.placeholder;
                 }
             }
 
             // Handle function arguments for non-type/non-primitive specifiers
-            if (typeof allowComputedValue === 'boolean' && allowComputedValue) {
+            if (options.allowComputedValue) {
                 if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
                     try {
                         arg = arg();
@@ -538,37 +599,20 @@
         };
     }
 
+    sprintf.config = config;
+    vsprintf.config = config;
+
     // Module export setup
     const sprintfLib = {
-        get allowComputedValue() { return allowComputedValue; },
-        set allowComputedValue(value) { allowComputedValue = value; },
-        get preserveUnmatchedPlaceholder() { return preserveUnmatchedPlaceholder; },
-        set preserveUnmatchedPlaceholder(value) { preserveUnmatchedPlaceholder = value; },
-        get throwErrorOnUnmatched() { return throwErrorOnUnmatched; },
-        set throwErrorOnUnmatched(value) { throwErrorOnUnmatched = value; },
         sprintf: sprintf,
-        vsprintf: vsprintf
+        vsprintf: vsprintf,
+        config: config
     };
 
     // Browser global export
     if (typeof window !== 'undefined') {
         window.sprintf = sprintf;
         window.vsprintf = vsprintf;
-
-        Object.defineProperty(window.sprintf, 'allowComputedValue', {
-            get: () => allowComputedValue,
-            set: (value) => { allowComputedValue = value; }
-        });
-
-        Object.defineProperty(window.sprintf, 'preserveUnmatchedPlaceholder', {
-            get: () => preserveUnmatchedPlaceholder,
-            set: (value) => { preserveUnmatchedPlaceholder = value; }
-        });
-
-        Object.defineProperty(window.sprintf, 'throwErrorOnUnmatched', {
-            get: () => throwErrorOnUnmatched,
-            set: (value) => { throwErrorOnUnmatched = value; }
-        });
 
         // AMD module definition
         if (typeof define === 'function' && define.amd) {
@@ -580,21 +624,6 @@
     if (typeof exports !== 'undefined') {
         exports.sprintf = sprintf;
         exports.vsprintf = vsprintf;
-
-        Object.defineProperty(exports.sprintf, 'allowComputedValue', {
-            get: () => allowComputedValue,
-            set: (value) => { allowComputedValue = value; }
-        });
-
-        Object.defineProperty(exports.sprintf, 'preserveUnmatchedPlaceholder', {
-            get: () => preserveUnmatchedPlaceholder,
-            set: (value) => { preserveUnmatchedPlaceholder = value; }
-        });
-
-        Object.defineProperty(exports.sprintf, 'throwErrorOnUnmatched', {
-            get: () => throwErrorOnUnmatched,
-            set: (value) => { throwErrorOnUnmatched = value; }
-        });
     }
 
     // Node.js module export

@@ -364,9 +364,7 @@ describe('sprintfjs', () => {
 
         describe('Callbacks', () => {
             it('should format a string using a callback function', () => {
-                sprintf.allowComputedValue = true;
-
-                assert.strictEqual('foobar', sprintf('%s', () => { return 'foobar'; }));
+                assert.strictEqual('foobar', sprintf.config().allowComputedValue(true).sprintf('%s', () => { return 'foobar'; }));
             });
         });
 
@@ -384,9 +382,7 @@ describe('sprintfjs', () => {
             });
 
             it('should return 0 for 9.9999e-7 + 0.0001', () => {
-                sprintf.preserveUnmatchedPlaceholder = true;
-                assert.equal('%(name)s number 1', sprintf('%(name)s number 1'));
-                sprintf.preserveUnmatchedPlaceholder = false;
+                assert.equal('%(name)s number 1', sprintf.config().preserveUnmatchedPlaceholder(true).sprintf('%(name)s number 1'));
             });
         });
     });

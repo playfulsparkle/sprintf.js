@@ -133,6 +133,59 @@ This single character at the end of the placeholder determines how the correspon
 
 ## Features
 
+### Flexible Configuration Options
+
+Our `sprintf` library offers powerful and flexible configuration options to tailor its behavior to your specific needs. You can easily adjust settings like how unmatched placeholders are handled or whether computed values are allowed. This section outlines the various ways you can configure the library.
+
+#### Chainable Configuration
+
+For more control, you can leverage our chainable configuration interface. This allows you to set multiple configuration options in a fluent and readable manner.
+
+**Method 1: Chaining Method Calls**
+
+You can chain configuration methods directly before calling `sprintf()`:
+
+```javascript
+const result = sprintf.config()
+    .allowComputedValue(true)
+    .preserveUnmatchedPlaceholder(true)
+    .sprintf("My name is %s and I have %d %s. Today is %s", "John", 5, () => { return 'apple'; });
+console.log(result);
+// Returns: "My name is John and I have 5 apple. Today is %s"
+```
+
+**Method 2: Using a Configuration Object**
+
+Alternatively, you can pass a JavaScript object containing your desired configuration options to the `config()` method:
+
+```javascript
+const sprintfConfig = sprintf.config({
+    allowComputedValue: true,
+    preserveUnmatchedPlaceholder: true
+});
+const result = sprintfConfig.sprintf("My name is %s and I have %d %s. Today is %s", "John", 5, () => { return 'apple'; });
+console.log(result);
+// Returns: "My name is John and I have 5 apple. Today is %s"
+```
+
+#### Reusing Configurations
+
+One of the key benefits of our configuration system is the ability to create reusable configuration objects. This is particularly useful when you have consistent formatting requirements across different parts of your application.
+
+```javascript
+const sprintfConfig = sprintf.config().allowComputedValue(true);
+
+const result1 = sprintfConfig.sprintf("%s", () => { return "test1"; });
+console.log(result1);
+// Returns: "test1" (with allowComputedValue enabled)
+
+const result2 = sprintfConfig.sprintf("%s", () => { return "test2"; });
+console.log(result2);
+// Returns: "test2" (using the same configuration)
+```
+
+In this example, `sprintfConfig` retains the `allowComputedValue(true)` setting, allowing you to apply it to multiple `sprintf()` calls without repeating the configuration.
+
 ### Flexible Argument Order
 
 You can specify the order of values in the formatted string independently from how they are provided. By adding a number (like `%1$s`, `%2$s`) to the placeholder, you control which value is used and in which position. This also allows reusing the same value multiple times without passing it again. This feature enhances the flexibility and readability of your code.
