@@ -37,6 +37,10 @@
         allowedNumericIndex: /^\d+$/
     };
 
+    /**
+     * Default configuration options for the sprintf function.
+     * @type {SprintfOptions}
+     */
     const defaultOptions = {
         allowComputedValue: false,
         throwErrorOnUnmatched: false,
@@ -44,22 +48,36 @@
     };
 
     /**
-     * Cache for parsed format strings to improve performance
-     * @type {Map<string, {parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}>}
+     * @typedef {Object} SprintfOptions
+     * @property {boolean} allowComputedValue - If true, when an argument passed to sprintf is a function, it will be executed, and its return value will be used as the value for the corresponding placeholder. Defaults to false.
+     * @property {boolean} throwErrorOnUnmatched - If true, throws a SyntaxError when a placeholder in the format string does not have a corresponding argument. Defaults to false.
+     * @property {boolean} preserveUnmatchedPlaceholder - If true, unmatched placeholders in the format string will be preserved in the output. Defaults to false.
+     */
+
+    /**
+     * Cache for parsed format strings to improve performance.
+     * This variable holds an object with methods to manage the cache of parsed format strings.
      */
     const sprintfCache = createCache(); // Optimized version of new Map();
 
     /**
-     * @typedef {Object} Placeholder
+     * @typedef {Object} ParseTree
      * @property {string} placeholder - The entire matched placeholder string
-     * @property {string} [paramNo] - Positional parameter number (1-based index)
-     * @property {Array<string>} [keys] - Named parameter access path
-     * @property {string} [numeralPrefix] - '+' sign for positive numbers
-     * @property {string} [padChar] - Padding character (e.g., '0' or space)
-     * @property {boolean} [align] - Left-align flag (true when '-' present)
-     * @property {string} [width] - Minimum field width
-     * @property {string} [precision] - Precision for numbers/strings
+     * @property {string | undefined} [paramNo] - Positional parameter number (1-based index)
+     * @property {Array<string> | undefined} [keys] - Named parameter access path
+     * @property {string | undefined} [numeralPrefix] - '+' sign for positive numbers
+     * @property {string | undefined} [padChar] - Padding character (e.g., '0' or space)
+     * @property {boolean | undefined} [align] - Left-align flag (true when '-' present)
+     * @property {string | undefined} [width] - Minimum field width
+     * @property {string | undefined} [precision] - Precision for numbers/strings
      * @property {string} type - Conversion type character
+     */
+
+    /**
+     * @typedef {Object} SprintfParseResult
+     * @property {Array<ParseTree>} parseTree - The parsed format string represented as an array of ParseTree objects.
+     * @property {boolean} namedUsed - Indicates whether named arguments were used in the format string.
+     * @property {boolean} positionalUsed - Indicates whether positional arguments were used in the format string.
      */
 
     /**
@@ -158,14 +176,16 @@
     }
 
     /**
-     * Core formatting engine that processes parsed format tree
-     * @param {Array<string|Placeholder>} parseTree - Result from sprintfParse()
-     * @param {Array} argv - Values to format
-     * @param {boolean} usesNamedArgs - Whether format uses named arguments
-     * @param {Object} options - Configuration options
-     * @returns {string} Formatted string
-     * @throws {TypeError} On invalid numeric arguments
-     * @throws {Error} On missing named arguments
+     * Core formatting engine that processes parsed format tree.
+     * @param {Array<ParseTree>} parseTree - Result from sprintfParse().
+     * @param {Array} argv - Values to format.
+     * @param {boolean} usesNamedArgs - Whether the format string uses named arguments.
+     * @param {Object} options - Configuration options.
+     * @param {Object} stats - An object to collect statistics about the formatting process.
+     * @returns {string} Formatted string.
+     * @throws {TypeError} On invalid numeric arguments.
+     * @throws {Error} When accessing a property of an undefined named argument or if a function argument execution fails.
+     * @throws {SyntaxError} On missing named or positional arguments when `options.throwErrorOnUnmatched` is true, or if there are too few positional arguments for implicit placeholders.
      */
     function sprintfFormat(parseTree, argv, usesNamedArgs, options, stats) {
         // Because of removing __proto__ parsetree can be undefined
@@ -268,13 +288,13 @@
             }
 
             // Handle function arguments for non-type/non-primitive specifiers
-            if (options.allowComputedValue) {
-                if (re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function') {
-                    try {
-                        arg = arg();
-                    } catch (e) {
-                        throw new Error('[sprintf] Failed to execute function argument');
-                    }
+            const isFunctionArg = re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function';
+
+            if (options.allowComputedValue && isFunctionArg) {
+                try {
+                    arg = arg();
+                } catch (e) {
+                    throw new Error('[sprintf] Failed to execute function argument');
                 }
             }
 
@@ -300,22 +320,46 @@
             // Process argument based on format specifier
             switch (placeholder.type) {
                 case 'b': // Binary
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = parseInt(arg, 10).toString(2);
                     break;
                 case 'c': // Character
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = '';
+                    }
+
                     arg = String.fromCharCode(parseInt(arg, 10));
                     break;
                 case 'd': // Integer
                 case 'i':
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = typeof arg === 'bigint' ? arg.toString() : Math.trunc(Number(arg)); // eslint-disable-line valid-typeof
                     break;
                 case 'j': // JSON
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = { __proto__: null };
+                    }
+
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
                     break;
                 case 'e': // Exponential notation
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
                     break;
                 case 'f': // Fixed-point
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     if (placeholder.precision !== undefined) {
                         // If precision is an empty string (from .f), use precision 0
                         const precisionValue = placeholder.precision === '' ? 0 : parseInt(placeholder.precision, 10);
@@ -326,36 +370,68 @@
                     }
                     break;
                 case 'g': // General format
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = '';
+                    }
+
                     arg = placeholder.precision ? String(arg.toPrecision(placeholder.precision)) : parseFloat(arg);
                     break;
                 case 'o': // Octal
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = (parseInt(arg, 10) >>> 0).toString(8);
                     break;
                 case 's': // String
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = '';
+                    }
+
                     arg = String(arg);
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 't': // Boolean
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = String(!!arg);
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'T': // Type detection
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = undefined;
+                    }
+
                     arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'u': // Unsigned integer
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     arg = parseInt(arg, 10) >>> 0;
                     break;
                 case 'v': // Primitive value
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = '';
+                    }
+
                     arg = String(arg.valueOf());
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'x':
                 case 'X':
+                    if (!options.allowComputedValue && isFunctionArg) {
+                        arg = 0;
+                    }
+
                     hex = (parseInt(arg, 10) >>> 0).toString(16);
 
                     if (arg && arg.high) {
@@ -408,10 +484,13 @@
     }
 
     /**
-     * Parses format string into executable tree structure
-     * @param {string} format - Format string to parse
-     * @returns {{parseTree: Array<string|Placeholder>, namedUsed: boolean, positionalUsed: boolean}}
-     * @throws {SyntaxError} On invalid format syntax
+     * Parses a format string into an executable tree structure.
+     * @param {string} format - The format string to parse, following sprintf syntax.
+     * @returns {SprintfParseResult} An object containing the parse tree and usage flags.
+     * @throws {SyntaxError} On invalid format syntax, including:
+     * - Invalid characters or structure in named argument keys.
+     * - Invalid array index format within named arguments.
+     * - Unexpected or unparseable placeholders.
      */
     function sprintfParse(format) {
         if (sprintfCache.has(format)) {
@@ -513,8 +592,9 @@
     }
 
     /**
-     * Copies the values of all of the enumerable own properties from one or
-     * more source objects to a target object. It will return the target object.
+     * Similar to the Object.assign() static method objectAssign copies all enumerable
+     * own properties from one or more source objects to a target object. It returns
+     * the modified target object.
      * @param {object} target The target object to apply the sources' properties to.
      * @param {...object} sources The source object(s) from which to copy properties.
      * @returns {object} The target object.
@@ -548,8 +628,9 @@
     }
 
     /**
-     * Constructs and returns a new string which contains the specified number
-     * of copies of the string on which it was called, concatenated together.
+     * Similar to the `repeat()` method of String values, the `stringRepeat` function constructs
+     * and returns a new string containing the specified number of copies of the input string,
+     * concatenated together.
      * @param {string} character The string to be repeated.
      * @param {number} count An integer indicating the number of times to repeat the string.
      * @returns {string} A new string containing the specified number of copies of the given character.
