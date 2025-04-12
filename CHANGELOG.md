@@ -4,8 +4,9 @@ All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation w
 
 ## [1.0.7] - 2025-04-12
 
-* **Fix:** Ensured that an empty precision (e.g., `%.f`) defaults to a precision of zero, aligning with standard formatting conventions.
-* **Fix:** Correctly implemented the formatting of `BigInt` values as decimal strings.
+* **Feature:** Ensured that an empty precision (e.g., `%.f`) defaults to a precision of zero, aligning with standard formatting conventions.
+* **Feature:** Correctly implemented the formatting of `BigInt` values as decimal strings.
+* **Fix:** When `allowComputedValue` was false and a function was passed as an argument to `sprintf` (e.g., `sprintf('%s', () => { return 'foobar'; })`), the function's string representation was incorrectly used as the output value for the placeholder. This issue has been resolved, ensuring that even when `allowComputedValue` is false, functions are not directly converted to strings for substitution, preventing unexpected behavior with different placeholder types like `%s` or `%d` (which would have likely resulted in 0).
 
 ## [1.0.6] - 2025-04-12
 

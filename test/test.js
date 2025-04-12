@@ -14,7 +14,7 @@ describe('sprintfjs', () => {
             const firstPass = sprintfConfig.sprintf('My name is %(firstname)s %(lastname)s', { lastname: 'Doe' });
 
             assert.strictEqual('My name is %(firstname)s Doe', sprintfConfig.sprintf(firstPass));
-            
+
             assert.strictEqual('My name is John Doe', sprintfConfig.sprintf(firstPass, { firstname: 'John' }));
         });
 
@@ -375,6 +375,10 @@ describe('sprintfjs', () => {
         describe('Callbacks', () => {
             it('should format a string using a callback function', () => {
                 assert.strictEqual('foobar', sprintf.config().allowComputedValue(true).sprintf('%s', () => { return 'foobar'; }));
+            });
+
+            it('should not format a string using a callback function', () => {
+                assert.strictEqual('', sprintf.config().allowComputedValue(false).sprintf('%s', () => { return 'foobar'; }));
             });
         });
 
