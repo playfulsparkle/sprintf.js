@@ -263,6 +263,17 @@ sprintf('%(name)s %2$s a %1$s', 'cracker', 'wants', data);
 // Returns: "Polly wants a cracker"
 ```
 
+### Leveraging `preserveUnmatchedPlaceholder` functionality
+
+You can use the `preserveUnmatchedPlaceholder` option to perform multi-stage string formatting with `sprintf`. This allows you to initially apply a subset of data, leaving unmatched placeholders in place to be filled in later.
+
+```javascript
+const sprintfConfig = sprintf.config({ preserveUnmatchedPlaceholder: true });
+const firstPass = sprintfConfig.sprintf('My name is %(firstname)s %(lastname)s', { lastname: 'Doe' });
+console.log(sprintfConfig.sprintf(firstPass)); // Returns: My name is %(firstname)s Doe
+console.log(sprintfConfig.sprintf(firstPass, { firstname: 'John' })) // Returns: My name is John Doe
+```
+
 ### Computed values
 
 To generate values dynamically, you can supply a function. This function will be invoked without arguments, and its return value will be treated as the computed value.

@@ -8,6 +8,16 @@ const assert = require('assert'),
 
 describe('sprintfjs', () => {
     describe('Simple Placeholders', () => {
+        it('should format correctly unmatched placeholder', () => {
+            const sprintfConfig = sprintf.config({ preserveUnmatchedPlaceholder: true });
+
+            const firstPass = sprintfConfig.sprintf('My name is %(firstname)s %(lastname)s', { lastname: 'Doe' });
+
+            assert.strictEqual('My name is %(firstname)s Doe', sprintfConfig.sprintf(firstPass));
+            
+            assert.strictEqual('My name is John Doe', sprintfConfig.sprintf(firstPass, { firstname: 'John' }));
+        });
+
         it('should format a percentage sign', () => {
             assert.strictEqual('%', sprintf('%%'));
         });

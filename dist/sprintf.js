@@ -24,7 +24,7 @@
         // Matches double percent (escaped percent)
         doublePercent: /^\x25{2}/,
         // Matches format placeholder components
-        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijostTuvxX])/,
+        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d*))?([b-gijostTuvxX])/,
         // Matches valid named argument keys
         namedKey: /^([a-z_][a-z_\d]*)/i,
         // Matches dot notation in named arguments
@@ -316,7 +316,14 @@
                     arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
                     break;
                 case 'f': // Fixed-point
-                    arg = placeholder.precision ? parseFloat(arg).toFixed(placeholder.precision) : parseFloat(arg);
+                    if (placeholder.precision !== undefined) {
+                        // If precision is an empty string (from .f), use precision 0
+                        const precisionValue = placeholder.precision === '' ? 0 : parseInt(placeholder.precision, 10);
+
+                        arg = parseFloat(arg).toFixed(precisionValue);
+                    } else {
+                        arg = parseFloat(arg);
+                    }
                     break;
                 case 'g': // General format
                     arg = placeholder.precision ? String(arg.toPrecision(placeholder.precision)) : parseFloat(arg);
