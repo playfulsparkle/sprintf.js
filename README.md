@@ -270,7 +270,7 @@ You can use the `preserveUnmatchedPlaceholder` option to perform multi-stage str
 ```javascript
 const sprintfConfig = sprintf.config({ preserveUnmatchedPlaceholder: true });
 const firstPass = sprintfConfig.sprintf('My name is %(firstname)s %(lastname)s', { lastname: 'Doe' });
-console.log(sprintfConfig.sprintf(firstPass)); // Returns: My name is %(firstname)s Doe
+console.log(firstPass); // Returns: My name is %(firstname)s Doe
 console.log(sprintfConfig.sprintf(firstPass, { firstname: 'John' })) // Returns: My name is John Doe
 ```
 
