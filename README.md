@@ -12,7 +12,13 @@ A **lightweight** and **open-source JavaScript library** providing a robust **sp
 npm install @playfulsparkle/sprintf-js
 ```
 
-### Bower
+### Yarn
+
+```bash
+yarn add @playfulsparkle/sprintf-js
+```
+
+### Bower (deprecated)
 
 ```bash
 bower install playfulsparkle/sprintf.js

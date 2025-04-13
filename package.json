@@ -1,15 +1,17 @@
 {
     "name": "@playfulsparkle/sprintf-js",
     "type": "commonjs",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
     "author": "Zsolt Oroszlány <hello@playfulsparkle.com>",
-    "main": "src/sprintf.js",
+    "main": "dist/sprintf.min.js",
     "scripts": {
-        "test": "mocha test/*.js",
         "pretest": "npm run lint",
+        "prepare": "npm run build",
+        "test": "mocha test/*.js",
         "lint": "eslint .",
-        "lint:fix": "eslint --fix ."
+        "lint:fix": "eslint --fix .",
+        "build": "gulp"
     },
     "repository": {
         "type": "git",
@@ -45,7 +47,8 @@
     },
     "files": [
         "dist",
-        "README.md"
+        "README.md",
+        "LICENSE"
     ],
     "publishConfig": {
         "access": "public"

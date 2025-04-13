@@ -1,11 +1,8 @@
 {
     "name": "sprintf.js",
     "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
-    "version": "1.0.7",
-    "main": [
-        "dist/sprintf.min.js",
-        "dist/angular-sprintf.min.js"
-    ],
+    "version": "1.0.8",
+    "main": "dist/sprintf.min.js",
     "license": "BSD-3-Clause",
     "keywords": [
         "sprintf",
@@ -21,5 +18,12 @@
         "type": "git",
         "url": "git://github.com/playfulsparkle/sprintf.js.git"
     },
-    "ignore": []
+    "ignore": [
+        ".*",
+        "src",
+        "test",
+        "node_modules",
+        "gulpfile.js",
+        "package.json"
+    ]
 }
