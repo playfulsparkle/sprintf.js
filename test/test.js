@@ -377,8 +377,56 @@ describe('sprintfjs', () => {
                 assert.strictEqual('foobar', sprintf.config().allowComputedValue(true).sprintf('%s', () => { return 'foobar'; }));
             });
 
-            it('should not format a string using a callback function', () => {
-                assert.strictEqual('', sprintf.config().allowComputedValue(false).sprintf('%s', () => { return 'foobar'; }));
+            it('should format a float with specified precision using a callback function', () => {
+                assert.strictEqual('2.3', sprintf.config().allowComputedValue(true).sprintf('%.1f', () => { return 2.345; }));
+            });
+
+            it('should format a JSON object with indentation using a callback function', () => {
+                assert.strictEqual('{\n  "foo": "bar"\n}', sprintf.config().allowComputedValue(true).sprintf('%2j', () => { return { foo: 'bar' }; }));
+            });
+
+            it('should format a number in shortest notation (lowercase) using a callback function', () => {
+                assert.strictEqual('3.141592653589793', sprintf.config().allowComputedValue(true).sprintf('%g', () => { return Math.PI; }));
+            });
+
+            it('should format an octal number using a callback function', () => {
+                assert.strictEqual('10', sprintf.config().allowComputedValue(true).sprintf('%o', () => { return 8; }));
+            });
+
+            it('should format an unsigned decimal integer using a callback function', () => {
+                assert.strictEqual('2', sprintf.config().allowComputedValue(true).sprintf('%u', () => { return 2; }));
+            });
+
+            it('should format a large unsigned decimal integer from a negative number using a callback function', () => {
+                assert.strictEqual('4294967294', sprintf.config().allowComputedValue(true).sprintf('%u', () => { return -2; }));
+            });
+
+            it('should format a hexadecimal number (lowercase) using a callback function', () => {
+                assert.strictEqual('ff', sprintf.config().allowComputedValue(true).sprintf('%x', () => { return 255; }));
+            });
+
+            it('should format a large hexadecimal number (lowercase) from a negative number using a callback function', () => {
+                assert.strictEqual('ffffff01', sprintf.config().allowComputedValue(true).sprintf('%x', () => { return -255; }));
+            });
+
+            it('should format a hexadecimal number (uppercase) using a callback function', () => {
+                assert.strictEqual('FF', sprintf.config().allowComputedValue(true).sprintf('%X', () => { return 255; }));
+            });
+
+            it('should format a large hexadecimal number (uppercase) from a negative number using a callback function', () => {
+                assert.strictEqual('FFFFFF01', sprintf.config().allowComputedValue(true).sprintf('%X', () => { return -255; }));
+            });
+
+            it('should format a large number exceeding 32 bits correctly as a hexadecimal string using a callback function', () => {
+                assert.equal('2308249009', sprintf.config().allowComputedValue(true).sprintf('%X', () => { return 150460469257; }));
+            });
+
+            it('should format a binary number using a callback function', () => {
+                assert.strictEqual('10', sprintf.config().allowComputedValue(true).sprintf('%b', () => { return 2; }));
+            });
+
+            it('should format a character using a callback function', () => {
+                assert.strictEqual('A', sprintf.config().allowComputedValue(true).sprintf('%c', () => { return 65; }));
             });
         });
 

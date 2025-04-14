@@ -288,11 +288,12 @@
             }
 
             // Handle function arguments for non-type/non-primitive specifiers
-            const isFunctionArg = re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) && typeof arg === 'function';
+            const isFunctionArg = re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) &&
+                (typeof arg === 'function' || Object.prototype.toString.call(arg) === '[object Function]');
 
             if (options.allowComputedValue && isFunctionArg) {
                 try {
-                    arg = arg();
+                    arg = arg.apply(this);
                 } catch (e) {
                     throw new Error('[sprintf] Failed to execute function argument');
                 }
