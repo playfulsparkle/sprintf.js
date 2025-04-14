@@ -2,6 +2,14 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.0.9] - 2025-04-14
+
+* **Fix:** Improved handling of function arguments in `sprintf`. By default, passing a function as an argument value will now throw an error unless the `allowComputedValue` option is explicitly enabled using `.config().allowComputedValue(true)`. This change enhances the predictability and safety of the library by preventing unintentional function executions.
+
+## [1.0.8] - 2025-04-13
+
+* **Fix:** Improved detection of function passed as argument value.
+
 ## [1.0.7] - 2025-04-12
 
 * **Feature:** Ensured that an empty precision (e.g., `%.f`) defaults to a precision of zero, aligning with standard formatting conventions.
