@@ -291,6 +291,11 @@
             const isFunctionArg = re.notType.test(placeholder.type) && re.notPrimitive.test(placeholder.type) &&
                 (typeof arg === 'function' || Object.prototype.toString.call(arg) === '[object Function]');
 
+
+            if (!options.allowComputedValue && isFunctionArg) {
+                throw new Error('[sprintf] Function arguments are not allowed by default. Enable with .config().allowComputedValue(true)');
+            }
+
             if (options.allowComputedValue && isFunctionArg) {
                 try {
                     arg = arg.apply(this);
@@ -321,46 +326,22 @@
             // Process argument based on format specifier
             switch (placeholder.type) {
                 case 'b': // Binary
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = parseInt(arg, 10).toString(2);
                     break;
                 case 'c': // Character
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = '';
-                    }
-
                     arg = String.fromCharCode(parseInt(arg, 10));
                     break;
                 case 'd': // Integer
                 case 'i':
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = typeof arg === 'bigint' ? arg.toString() : Math.trunc(Number(arg)); // eslint-disable-line valid-typeof
                     break;
                 case 'j': // JSON
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = { __proto__: null };
-                    }
-
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
                     break;
                 case 'e': // Exponential notation
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
                     break;
                 case 'f': // Fixed-point
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     if (placeholder.precision !== undefined) {
                         // If precision is an empty string (from .f), use precision 0
                         const precisionValue = placeholder.precision === '' ? 0 : parseInt(placeholder.precision, 10);
@@ -371,68 +352,36 @@
                     }
                     break;
                 case 'g': // General format
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = '';
-                    }
-
                     arg = placeholder.precision ? String(arg.toPrecision(placeholder.precision)) : parseFloat(arg);
                     break;
                 case 'o': // Octal
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = (parseInt(arg, 10) >>> 0).toString(8);
                     break;
                 case 's': // String
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = '';
-                    }
-
                     arg = String(arg);
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 't': // Boolean
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = String(!!arg);
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'T': // Type detection
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = undefined;
-                    }
-
                     arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'u': // Unsigned integer
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     arg = parseInt(arg, 10) >>> 0;
                     break;
                 case 'v': // Primitive value
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = '';
-                    }
-
                     arg = String(arg.valueOf());
 
                     arg = (placeholder.precision ? arg.substring(0, placeholder.precision) : arg);
                     break;
                 case 'x':
                 case 'X':
-                    if (!options.allowComputedValue && isFunctionArg) {
-                        arg = 0;
-                    }
-
                     hex = (parseInt(arg, 10) >>> 0).toString(16);
 
                     if (arg && arg.high) {

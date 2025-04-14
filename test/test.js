@@ -428,6 +428,14 @@ describe('sprintfjs', () => {
             it('should format a character using a callback function', () => {
                 assert.strictEqual('A', sprintf.config().allowComputedValue(true).sprintf('%c', () => { return 65; }));
             });
+
+            it('should format undefined as "function" using a callback function', () => {
+                assert.strictEqual('function', sprintf('%T', () => { return undefined; }));
+            });
+
+            it('should format true as "() => { return 42; " using a callback function', () => {
+                assert.strictEqual('() => { return 42; }', sprintf('%v', () => { return 42; }));
+            });
         });
 
         describe('Other', () => {

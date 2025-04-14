@@ -28,6 +28,20 @@ describe('sprintfjs Cache Behavior', () => {
 
 describe('sprintfjs Error Handling', () => {
 
+    describe('Callbacks', () => {
+        it('should throw Error when we try to format a string using a callback function', () => {
+            assert.throws(() => { sprintf('%s', () => { return 'foobar'; }); }, Error);
+        });
+
+        it('should not throw Error when we try to format undefined as "undefined" using a callback function', () => {
+            assert.doesNotThrow(() => { sprintf('%T', undefined); }, Error);
+        });
+
+        it('should not throw Error when we try to format true as "true" using a callback function', () => {
+            assert.doesNotThrow(() => { sprintf('%v', true); }, Error);
+        });
+    });
+
     describe('Invalid Placeholders', () => {
         it('should throw SyntaxError for missing parameter', () => {
             assert.throws(() => { sprintf.config().throwErrorOnUnmatched(true).sprintf('Two params needed 1: %s 2: %s', 'one'); }, SyntaxError);
