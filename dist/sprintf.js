@@ -348,34 +348,38 @@
                 case 'e': // Exponential notation
                 case 'E':
                     try {
-                        // Default precision is 6 if not specified
-                        const precision = placeholder.precision !== undefined ? parseInt(placeholder.precision) : 6;
+                        // Get precision (default to 6 if not specified)
+                        let precision = 6;
 
-                        // Convert to number and format with scientific notation
+                        if (placeholder.precision !== undefined) {
+                            precision = parseInt(placeholder.precision, 10) || 0;
+                        }
+
                         const floatVal = parseFloat(arg);
-
-                        // Use toExponential with the specified precision
                         const formattedValue = floatVal.toExponential(precision);
 
                         // Split into mantissa and exponent
                         const parts = formattedValue.split('e');
-                        const mantissa = parts[0];
-                        const exponent = parts[1];
+                        let mantissa = parts[0];
+                        const expVal = parseInt(parts[1], 10);
 
-                        // Format the exponent to always have sign and two digits (e.g., "+00", "+01", "-05")
-                        const expVal = parseInt(exponent);
-                        const expSign = expVal >= 0 ? '+' : '-';
-                        const expDigits = Math.abs(expVal).toString().padStart(2, '0');
-
-                        // Combine with the proper format
-                        arg = `${mantissa}e${expSign}${expDigits}`;
-
-                        // Convert to uppercase if E format is specified
-                        if (placeholder.type === 'E') {
-                            arg = arg.toUpperCase();
+                        // Handle precision=0 (strip decimal point)
+                        if (precision === 0) {
+                            mantissa = mantissa.split('.')[0];
                         }
+
+                        // Format exponent to +00/-00 style (C compatibility)
+                        const expSign = expVal >= 0 ? '+' : '-';
+                        const expAbs = Math.abs(expVal);
+                        const expDigits = expAbs.toString().padStart(2, '0'); // Force 2 digits
+
+                        arg = `${mantissa}e${expSign}${expDigits}`;
                     } catch (error) {
-                        arg = placeholder.type === 'E' ? '0.000000E+00' : '0.000000e+00';
+                        arg = (placeholder.precision === 0) ? '0e+00' : '0.000000e+00';
+                    }
+
+                    if (placeholder.type === 'E') {
+                        arg = arg.toUpperCase();
                     }
                     break;
                 case 'f': // Fixed-point
