@@ -2,6 +2,10 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.1.1] - 2025-04-14
+
+* Normalized scientific notation format (`e`, `E`) to align with C++ conventions.
+
 ## [1.1.0] - 2025-04-14
 
 * Added support for uppercase `E` in scientific notation output for floating-point numbers through the `%E` format specifier (e.g., `1.234500E+02`), alongside the existing lowercase `e` format (`%e`).
