@@ -1,7 +1,7 @@
 {
     "name": "sprintf.js",
     "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "main": "dist/sprintf.min.js",
     "license": "BSD-3-Clause",
     "keywords": [

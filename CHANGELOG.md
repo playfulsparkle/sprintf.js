@@ -2,6 +2,10 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.1.0] - 2025-04-14
+
+* Added support for uppercase `E` in scientific notation output for floating-point numbers through the `%E` format specifier (e.g., `1.234500E+02`), alongside the existing lowercase `e` format (`%e`).
+
 ## [1.0.9] - 2025-04-14
 
 * **Fix:** Improved handling of function arguments in `sprintf`. By default, passing a function as an argument value will now throw an error unless the `allowComputedValue` option is explicitly enabled using `.config().allowComputedValue(true)`. This change enhances the predictability and safety of the library by preventing unintentional function executions.

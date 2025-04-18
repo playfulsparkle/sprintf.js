@@ -58,6 +58,10 @@ describe('sprintfjs', () => {
             assert.strictEqual('2e+0', sprintf('%e', 2));
         });
 
+        it('should format a number in scientific notation (uppercase)', () => {
+            assert.strictEqual('2E+0', sprintf('%E', 2));
+        });
+
         it('should format an unsigned decimal integer', () => {
             assert.strictEqual('2', sprintf('%u', 2));
         });

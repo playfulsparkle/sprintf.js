@@ -1,7 +1,7 @@
 {
     "name": "@playfulsparkle/sprintf-js",
     "type": "commonjs",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "description": "A lightweight, Open Source sprintf.js sprintf implementation written in JavaScript",
     "author": "Zsolt Oroszlány <hello@playfulsparkle.com>",
     "main": "dist/sprintf.min.js",

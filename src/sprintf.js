@@ -13,9 +13,9 @@
         // Matches if type is NOT 'v' (primitive value)
         notPrimitive: /[^v]/,
         // Matches numeric format specifiers
-        number: /[diefg]/,
+        number: /[dieEfg]/,
         // Matches numeric argument types requiring number validation
-        numericArg: /[bcdiefguxX]/,
+        numericArg: /[bcdieEfguxX]/,
         // Matches JSON object specifier
         jsonObject: /[j]/,
         // Matches plain text between format specifiers
@@ -23,7 +23,7 @@
         // Matches double percent (escaped percent)
         doublePercent: /^\x25{2}/,
         // Matches format placeholder components
-        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d*))?([b-gijostTuvxX])/,
+        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d*))?([bcdieEfgjostTuvxX])/,
         // Matches valid named argument keys
         namedKey: /^([a-z_][a-z_\d]*)/i,
         // Matches dot notation in named arguments
@@ -338,7 +338,10 @@
                     arg = JSON.stringify(arg, null, placeholder.width ? parseInt(placeholder.width) : 0);
                     break;
                 case 'e': // Exponential notation
+                case 'E':
                     arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
+
+                    arg = placeholder.type === 'E' ? arg.toUpperCase() : arg;
                     break;
                 case 'f': // Fixed-point
                     if (placeholder.precision !== undefined) {
