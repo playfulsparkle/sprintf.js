@@ -55,11 +55,11 @@ describe('sprintfjs', () => {
         });
 
         it('should format a number in scientific notation (lowercase)', () => {
-            assert.strictEqual('2e+0', sprintf('%e', 2));
+            assert.strictEqual('2.000000e+00', sprintf('%e', 2));
         });
 
         it('should format a number in scientific notation (uppercase)', () => {
-            assert.strictEqual('2E+0', sprintf('%E', 2));
+            assert.strictEqual('2.000000E+00', sprintf('%E', 2));
         });
 
         it('should format an unsigned decimal integer', () => {

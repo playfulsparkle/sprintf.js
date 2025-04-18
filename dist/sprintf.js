@@ -340,9 +340,36 @@
                     break;
                 case 'e': // Exponential notation
                 case 'E':
-                    arg = placeholder.precision ? parseFloat(arg).toExponential(placeholder.precision) : parseFloat(arg).toExponential();
+                    try {
+                        // Default precision is 6 if not specified
+                        const precision = placeholder.precision !== undefined ? parseInt(placeholder.precision) : 6;
 
-                    arg = placeholder.type === 'E' ? arg.toUpperCase() : arg;
+                        // Convert to number and format with scientific notation
+                        const floatVal = parseFloat(arg);
+
+                        // Use toExponential with the specified precision
+                        const formattedValue = floatVal.toExponential(precision);
+
+                        // Split into mantissa and exponent
+                        const parts = formattedValue.split('e');
+                        const mantissa = parts[0];
+                        const exponent = parts[1];
+
+                        // Format the exponent to always have sign and two digits (e.g., "+00", "+01", "-05")
+                        const expVal = parseInt(exponent);
+                        const expSign = expVal >= 0 ? '+' : '-';
+                        const expDigits = Math.abs(expVal).toString().padStart(2, '0');
+
+                        // Combine with the proper format
+                        arg = `${mantissa}e${expSign}${expDigits}`;
+
+                        // Convert to uppercase if E format is specified
+                        if (placeholder.type === 'E') {
+                            arg = arg.toUpperCase();
+                        }
+                    } catch (error) {
+                        arg = placeholder.type === 'E' ? '0.000000E+00' : '0.000000e+00';
+                    }
                     break;
                 case 'f': // Fixed-point
                     if (placeholder.precision !== undefined) {

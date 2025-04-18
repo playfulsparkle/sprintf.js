@@ -159,8 +159,8 @@ This single character at the end of the placeholder determines how the correspon
 | `b`       | Integer in binary format.                             | `sprintf('%b', 10)`                         | `1010`          |
 | `c`       | Integer as an ASCII character.                        | `sprintf('%c', 65)`                         | `A`             |
 | `d` or `i`| Signed decimal integer.                               | `sprintf('%d', 123)`                        | `123`           |
-| `e`       | Floating point in scientific notation (lowercase "e") | `sprintf("%e", 123.45)`                     | `1.2345e+2`     |
-| `E`       | Floating point in scientific notation (uppercase "E") | `sprintf("%E", 123.45)`                     | `1.2345E+2`     |
+| `e`       | Floating point in scientific notation (lowercase "e") | `sprintf("%e", 123.45)`                     | `1.234500e+02`  |
+| `E`       | Floating point in scientific notation (uppercase "E") | `sprintf("%E", 123.45)`                     | `1.234500E+02`  |
 | `u`       | Unsigned decimal integer.                             | `sprintf('%u', -5)`                         | `4294967291`    |
 | `f`       | Floating point as-is (with optional precision).       | `sprintf('%.2f', 3.14159)`                  | `3.14`          |
 | `g`       | Floating point with adaptive formatting.              | `sprintf('%.3g', 1234.56)`                  | `1.23e+3`       |
