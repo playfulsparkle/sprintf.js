@@ -23,11 +23,27 @@ describe('sprintfjs', () => {
         });
 
         it('should format a binary number', () => {
-            assert.strictEqual('10', sprintf('%b', 2));
+            assert.strictEqual('1010', sprintf('%b', 10));
+        });
+
+        it('should format a binary negative number', () => {
+            assert.strictEqual('11111111111111111111111111111011', sprintf('%b', -5));
+        });
+
+        it('should format a binary number (overflow)', () => {
+            assert.strictEqual('100000000', sprintf('%b', 256));
         });
 
         it('should format a character', () => {
             assert.strictEqual('A', sprintf('%c', 65));
+        });
+
+        it('should format a character overflow', () => {
+            assert.strictEqual('\x00', sprintf('%c', 256));
+        });
+
+        it('should format a character negative', () => {
+            assert.strictEqual('ÿ', sprintf('%c', -1));
         });
 
         it('should format a decimal integer', () => {
@@ -426,7 +442,7 @@ describe('sprintfjs', () => {
             });
 
             it('should format a binary number using a callback function', () => {
-                assert.strictEqual('10', sprintf.config().allowComputedValue(true).sprintf('%b', () => { return 2; }));
+                assert.strictEqual('1010', sprintf.config().allowComputedValue(true).sprintf('%b', () => { return 10; }));
             });
 
             it('should format a character using a callback function', () => {

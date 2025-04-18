@@ -315,7 +315,7 @@
 
             let numeralPrefix = '';
 
-            let hex;
+            let tmp;
 
             // Format according to type
             if (re.number.test(placeholder.type)) {
@@ -325,10 +325,17 @@
             // Process argument based on format specifier
             switch (placeholder.type) {
                 case 'b': // Binary
-                    arg = parseInt(arg, 10).toString(2);
+                    tmp = parseInt(arg, 10);
+                    tmp = isNaN(tmp) ? 0 : tmp;
+                    // Truncate to 32 bits and handle two's complement
+                    tmp = tmp >>> 0; // Unsigned 32-bit conversion
+                    arg = tmp.toString(2);
                     break;
                 case 'c': // Character
-                    arg = String.fromCharCode(parseInt(arg, 10));
+                    tmp = parseInt(arg, 10);
+                    tmp = isNaN(tmp) ? 0 : tmp; // Handle non-integer to 0
+                    tmp = tmp & 0xFF;            // Clamp to 0-255 (like C's unsigned char)
+                    arg = String.fromCharCode(tmp);
                     break;
                 case 'd': // Integer
                 case 'i':
@@ -411,11 +418,11 @@
                     break;
                 case 'x':
                 case 'X':
-                    hex = (parseInt(arg, 10) >>> 0).toString(16);
+                    tmp = (parseInt(arg, 10) >>> 0).toString(16);
 
                     if (arg && arg.high) {
                         // Handle special objects with 'high' property (likely for 64-bit integers)
-                        hex = (parseInt(arg.high, 10) >>> 0).toString(16) + hex.padStart(8, '0');
+                        tmp = (parseInt(arg.high, 10) >>> 0).toString(16) + tmp.padStart(8, '0');
                     } else if (Number(arg) > MAX_INT32 || Number(arg) < MIN_INT32) {
                         // Handle values outside 32-bit signed integer range using BigInt
                         try {
@@ -424,13 +431,13 @@
                             const highBits = bigIntValue >> BigInt(32);
                             const highHex = (highBits & BigInt(MAX_UINT32)).toString(16);
 
-                            hex = highBits !== BigInt(0) ? highHex + hex.padStart(8, '0') : hex;
+                            tmp = highBits !== BigInt(0) ? highHex + tmp.padStart(8, '0') : tmp;
                         } catch (e) {
                             // Fallback if BigInt fails (e.g., on older browsers), keep the original hex value
                         }
                     }
 
-                    arg = placeholder.type === 'X' ? hex.toUpperCase() : hex;
+                    arg = placeholder.type === 'X' ? tmp.toUpperCase() : tmp;
                     break;
                 default:
                     throw new Error(`[sprintf] Unknown type: ${placeholder.type}`);

@@ -2,6 +2,15 @@
 
 All notable changes to the "@playfulsparkle/sprintf-js" sprintf implementation will be documented in this file.
 
+## [1.1.2] - 2025-04-14
+
+**Character Handling (`%c`):**
+* Values are clamped to 0-255 using `& 0xFF` to match C's `unsigned char` behavior.
+
+**Binary Handling (`%b`):**
+* Added unsigned 32-bit conversion via `>>> 0` to handle overflow/underflow like C.
+* Negative numbers now output two's complement (e.g., `-5` becomes `11111111111111111111111111111011`).
+
 ## [1.1.1] - 2025-04-14
 
 * Normalized scientific notation format (`e`, `E`) to align with C++ conventions.
