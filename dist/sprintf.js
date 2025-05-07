@@ -1,4 +1,4 @@
-/*! @playfulsparkle/sprintf-js v1.1.1 | Copyright (c) 2025-present, Zsolt Oroszlány <hello@playfulsparkle.com> | BSD-3-Clause */
+/*! @playfulsparkle/sprintf-js v1.1.2 | Copyright (c) 2025-present, Zsolt Oroszlány <hello@playfulsparkle.com> | BSD-3-Clause */
 /* global BigInt, window, exports, define */
 
 !function () {
