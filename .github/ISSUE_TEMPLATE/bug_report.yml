@@ -1,0 +1,79 @@
+name: 🐞 Bug Report
+description: Create a report to help us improve the sprintf.js library
+title: "Bug Report Title"
+labels: []
+assignees:
+  - zsoltoroszlany82
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the details below to help us understand and fix the issue.
+
+  - type: textarea
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: e.g. sprintf() doesn't handle empty string format correctly.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Provide the steps to reproduce the behavior. Include a minimal code snippet that demonstrates the issue.
+      placeholder: |
+        1. Install the library: `npm install @playfulsparkle/sprintf-js`
+        2. Run the following code:
+           ```javascript
+           import { sprintf } from '@playfulsparkle/sprintf-js';
+
+           // Your code causing the bug
+           const result = sprintf('%s', '');
+           console.log(result);
+           ```
+        3. Describe the observed output or behavior
+        4. Describe the expected output or behavior
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: The output should have been "".
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Error Logs or Messages
+      description: If applicable, paste any error messages, console output, or stack traces here.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Screenshots or Video
+      description: If relevant, add screenshots or a video to help explain your problem. Drag and drop images or video files into this area.
+    validations:
+      required: false
+
+  - type: input
+    attributes:
+      label: sprintf.js Version
+      description: What version of sprintf.js are you using?
+      placeholder: e.g. 1.2.3
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Environment Details
+      description: Specify the environment where the bug occurs (Node.js or Browser). Include versions of Node.js, browser, and operating system.
+      placeholder: |
+        - Node.js version: v18.12.0
+        - Browser: Chrome 108, Firefox 105, Safari 16
+        - Operating System: macOS Ventura 13.0, Windows 11, Ubuntu 22.04
+    validations:
+      required: true
